@@ -19,5 +19,7 @@ const Route = use('Route')
 
 Route.on('/').render('welcome')
 
+//all of the logged in stuff
+Route.group('authenticated', function () {
 
-Route.on('/test').render('master')
+}).middleware('auth');
