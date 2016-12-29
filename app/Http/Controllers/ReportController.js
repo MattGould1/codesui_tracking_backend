@@ -1,9 +1,13 @@
 'use strict'
 
+const Session = use('App/Model/Session')
+
 class ReportController {
 
   * index(request, response) {
     //
+    const sessions = yield Session.all()
+    yield response.json(sessions)
   }
 
   * create(request, response) {
