@@ -10,6 +10,7 @@ class SessionTableSchema extends Schema {
       table.timestamps()
       table.string('id')
       table.string('utm_source')
+      table.string('utm_medium')
       table.string('utm_name')
       table.string('utm_term')
       table.string('utm_content')
