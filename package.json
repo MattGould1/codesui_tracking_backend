@@ -3,8 +3,8 @@
   "version": "3.2.0",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon --harmony-proxies --watch app --watch bootstrap --watch config --watch .env -x node server.js",
-    "start": "node --harmony-proxies server.js",
+    "dev": "nodemon --watch app --watch bootstrap --watch config --watch .env -x \"node --harmony_proxies\" server.js",
+    "start": "node --harmony_proxies server.js",
     "lint": "standard"
   },
   "author": "",
