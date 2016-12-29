@@ -5,8 +5,7 @@ const Schema = use('Schema')
 class SessionTableSchema extends Schema {
 
   up () {
-    this.create('session', (table) => {
-      table.increments()
+    this.create('sessions', (table) => {
       table.timestamps()
       table.string('id')
       table.string('utm_source')
@@ -21,7 +20,7 @@ class SessionTableSchema extends Schema {
   }
 
   down () {
-    this.drop('session')
+    this.drop('sessions')
   }
 
 }

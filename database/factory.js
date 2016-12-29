@@ -28,7 +28,7 @@ Factory.blueprint('App/Model/User', (fake) => {
   }
 })
 
-Factory.blueprint('App/Model/Session', (fake) => {
+Factory.blueprint('sessions', (fake) => {
 
   var iso_weeks = [
     '2016 | 21',
@@ -76,10 +76,11 @@ Factory.blueprint('App/Model/Session', (fake) => {
   return {
     id: fake.string(10),
     utm_source: fake.pickone(utm_source),
+    utm_medium: fake.string(20),
     utm_name: fake.pickone(utm_name),
     utm_term: fake.pickone(utm_term),
     utm_content: fake.string(20),
-    utm_host_name: fake.pickone(utm_host_name),
+    host_name: fake.pickone(utm_host_name),
     iso_week: fake.pickone(iso_weeks)
   }
 })
