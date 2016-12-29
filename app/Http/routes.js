@@ -19,6 +19,11 @@ const Route = use('Route')
 
 Route.on('/').render('welcome')
 
+//all of the public api routes - mainly used for saving data from user sessions
+Route.group('public', function () {
+	Route.post('session/initiate', 'sessionController.initiate');
+});
+
 //all of the logged in stuff
 Route.group('authenticated', function () {
 
