@@ -74,13 +74,14 @@ Factory.blueprint('sessions', (fake) => {
     'email'
   ];
   return {
-    id: fake.string(10),
+    id: fake.huid(),
     utm_source: fake.pickone(utm_source),
     utm_medium: fake.string(20),
     utm_name: fake.pickone(utm_name),
     utm_term: fake.pickone(utm_term),
     utm_content: fake.string(20),
     host_name: fake.pickone(utm_host_name),
-    iso_week: fake.pickone(iso_weeks)
+    iso_week: fake.pickone(iso_weeks),
+
   }
 })
