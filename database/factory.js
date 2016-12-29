@@ -74,7 +74,7 @@ Factory.blueprint('sessions', (fake) => {
     'email'
   ];
   return {
-    id: fake.huid(),
+    id: fake.guid(),
     utm_source: fake.pickone(utm_source),
     utm_medium: fake.string(20),
     utm_name: fake.pickone(utm_name),
