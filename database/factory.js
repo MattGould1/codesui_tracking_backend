@@ -12,6 +12,9 @@
 */
 
 const Factory = use('Factory')
+
+const Database = use('Database')
+
 /*
 |--------------------------------------------------------------------------
 | User Model Blueprint
@@ -27,6 +30,35 @@ Factory.blueprint('App/Model/User', (fake) => {
     password: fake.password()
   }
 })
+
+Factory.blueprint('activity', (fake) => {
+
+  var activity_type = [
+    'website',
+    'mobile'
+  ];
+
+  var opportunity_type = [
+    '1a',
+    '1b',
+    '1c',
+    '2a',
+    '2b',
+    '2c'
+  ];
+  const Session = use('App/Model/Session')
+
+  const session_id = Session.ids()
+
+  return {
+    activity_type: fake.pickone(activity_type),
+    opportunity_type: fake.pickone(opportunity_type),
+    session_id: fake.pickone(session_id),
+    user_id: fake.first(),
+    activity_id: fake.fbid(),
+    call_id: fake.fbid()
+  }
+});
 
 Factory.blueprint('sessions', (fake) => {
 
@@ -82,6 +114,5 @@ Factory.blueprint('sessions', (fake) => {
     utm_content: fake.string(20),
     host_name: fake.pickone(utm_host_name),
     iso_week: fake.pickone(iso_weeks),
-
   }
 })
