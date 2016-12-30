@@ -3,7 +3,9 @@
 const Lucid = use('Lucid')
 
 class Session extends Lucid {
-
+  user () {
+    return this.belongsTo('App/Model/User')
+  }
 }
 
 module.exports = Session
