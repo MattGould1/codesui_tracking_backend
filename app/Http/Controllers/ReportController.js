@@ -6,7 +6,7 @@ class ReportController {
 
   * index(request, response) {
     //
-    const sessions = yield Session.all()
+    const sessions = yield Session.ids()
     yield response.json(sessions)
   }
 
