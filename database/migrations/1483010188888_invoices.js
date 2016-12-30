@@ -7,6 +7,10 @@ class InvoicesTableSchema extends Schema {
   up () {
     this.create('invoices', (table) => {
       table.increments()
+      table.string('currency_code')
+      table.string('website')
+      table.string('invoice_id')
+      table.string('value')
       table.timestamps()
     })
   }

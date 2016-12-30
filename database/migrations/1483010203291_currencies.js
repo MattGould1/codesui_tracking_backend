@@ -7,6 +7,8 @@ class CurrenciesTableSchema extends Schema {
   up () {
     this.create('currencies', (table) => {
       table.increments()
+      table.string('source')
+      table.string('rate')
       table.timestamps()
     })
   }
