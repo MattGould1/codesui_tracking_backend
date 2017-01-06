@@ -8,19 +8,43 @@ const _ = use('lodash')
 class ReportController {
 
   query(start_iso, end_iso) {
-    const results = Database.table('sessions')
-                            .select(
-                              'sessions.iso_week',
-                              'activity.activity_type',
-                              'sessions.id as sid',
-                              'user_id',
-                              'activity_type',
-                              'activity_id')
-                            //.countDistinct('sessions.id as sid')
-                            .leftJoin('activity', 'sessions.id', 'activity.session_id')
-                            .whereNotNull('sessions.id')
-                            .whereBetween('sessions.iso_week', [start_iso, end_iso])
-                            //.groupBy('sessions.iso_week');
+    const results = Database.raw(`
+      SELECT
+          S.id AS session_id,
+          S.iso_week AS iso_week,
+          S.utm_term AS utm_term,
+          S.utm_source AS utm_source,
+          S.utm_name AS utm_name,
+          S.utm_content AS utm_content,
+          COUNT(A.id) AS activity_id,
+          COUNT(DISTINCT S.session_id) AS unique_sessions,
+          COUNT(CASE
+              WHEN A.opportunity_type = 1 THEN 1
+              ELSE NULL
+          END) AS sum_leads_soi,
+          COUNT(CASE
+              WHEN A.opportunity_type = 2 THEN 1
+              ELSE NULL
+          END) AS sum_leads_active,
+          COUNT(CASE
+              WHEN A.opportunity_type = 3 THEN 1
+              ELSE NULL
+          END) AS sum_leads_direct,
+          COUNT(CASE
+              WHEN A.opportunity_type = 4 THEN 1
+              ELSE NULL
+          END) AS sum_leads_assisted,
+          COUNT(CASE
+              WHEN A.opportunity_type = 5 THEN 1
+              ELSE NULL
+          END) AS sum_leads_active_direct
+      FROM
+          sessions AS S
+              LEFT JOIN
+          activity AS A ON S.session_id = A.session_id
+      -- WHERE S.iso_week BETWEEN '2016 | 22' AND '2016 | 23'
+      GROUP BY S.iso_week , S.utm_term , S.utm_source , S.utm_name , S.utm_content
+    `);
 
     return results;
   }
@@ -35,51 +59,117 @@ class ReportController {
       total forms submitted
       forms submitted per form
 
-
       commission earnt
       revenue
-
-
-     */
+    */
 
     const results = yield this.query('2016 | 01', '2016 | 53');
 
-
     var pruned_results = {
+      utm_params: {
+        utm_term: [],
+        utm_source: [],
+        utm_name: [],
+        utm_content: []
+      },
       activity: {
-        types: [],
-        total: 0,
-        opportunity_type: []
+        id: [],
       },
       sessions: {
-        unique: 0,
-        unique_list: []
+        total_unique: 0,
+        total_unique_ids: []
       },
       users: {
         unique: 0,
         unique_list: []
-      },
-
+      }
     };
 
+    var iso_week_copy = pruned_results;
+    _.forEach(results[0], function (value) {
 
-    //get the length of unique users
-    pruned_results.users.unique = _.uniq(_.map(results, 'user_id')).length;
-    pruned_results.users.unique_list = _.uniq(_.map(results, 'user_id'));
+      //format for the iso_week (copy of pruned_results basically) all iso_weeks added together should equal 
+      var iso_week = {
+        utm_params: {
+          utm_term: [],
+          utm_source: [],
+          utm_name: [],
+          utm_content: []
+        },
+        activity: {
+          id: [],
+        },
+        sessions: {
+          total_unique: 0,
+          total_unique_ids: []
+        },
+        users: {
+          unique: 0,
+          unique_list: []
+        }
+      };
 
-    pruned_results.sessions.unique = _.uniq(_.map(results, 'sid')).length;
-    pruned_results.sessions.unique_list = _.uniq(_.map(results, 'sid'));
-
-    pruned_results.activity.types = _.uniq(_.map(results, 'activity_type'));
-    pruned_results.activity.total = _.uniq(_.map(results, 'activity_id')).length;
-
-    _.forEach(results, function (value) {
       //sessions
-      //pruned_results.sessions.unique = pruned_results.sessions.unique + value.sid;
+      pruned_results.sessions.total_unique = pruned_results.sessions.total_unique + value.unique_sessions;
+      pruned_results.sessions.total_unique_ids.push(value.session_id);
 
+      //utm params
+      pruned_results.utm_params.utm_term.push(value.utm_term);
+      pruned_results.utm_params.utm_source.push(value.utm_source);
+      pruned_results.utm_params.utm_name.push(value.utm_name);
+      pruned_results.utm_params.utm_content.push(value.utm_content);
+
+      //activity info 
+      pruned_results.activity.id.push(value.activity_id);
+      pruned_results.
+
+      if (pruned_results[value.iso_week]) { // if the week already exists, append data to it
+        //sessions
+
+        var s = pruned_results[value.iso_week];
+
+        iso_week.sessions.total_unique = s.sessions.total_unique + value.unique_sessions;
+        //session_ids
+        s.sessions.total_unique_ids.push(value.session_id);
+        iso_week.sessions.total_unique_ids = s.sessions.total_unique_ids;
+
+        //utm params
+        s.utm_params.utm_term.push(value.utm_term);
+        iso_week.utm_params.utm_term = s.utm_params.utm_term;
+
+        s.utm_params.utm_source.push(value.utm_source);
+        iso_week.utm_params.utm_source = s.utm_params.utm_source;
+
+        s.utm_params.utm_name.push(value.utm_name);
+        iso_week.utm_params.utm_name = s.utm_params.utm_name;
+
+        s.utm_params.utm_content.push(value.utm_content);
+        iso_week.utm_params.utm_content = s.utm_params.utm_content;
+
+        //activity info
+        s.activity.id.push(value.activity_id);
+        iso_week.activity.id = s.activity.id;
+
+      } else { //new week, do this
+
+        //sessions
+        iso_week.sessions.total_unique = value.unique_sessions;
+        iso_week.sessions.total_unique_ids.push(value.session_id);
+
+        //utm params
+        iso_week.utm_params.utm_term.push(value.utm_term);
+        iso_week.utm_params.utm_source.push(value.utm_source);
+        iso_week.utm_params.utm_name.push(value.utm_name);
+        iso_week.utm_params.utm_content.push(value.utm_content);
+
+        //activity info
+        iso_week.activity.id.push(value.activity_id);
+      }
+
+      pruned_results[value.iso_week] = iso_week;
     });
 
-    return response.json(pruned_results)
+    return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
   }
 
   // * weekly (request, response) {
