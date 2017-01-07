@@ -51,41 +51,35 @@ class ReportController {
 
   * index(request, response) {
 
-    /*
-      unique users
-      total sessions
-      total opportunities
-      total opportunities per type
-      total forms submitted
-      forms submitted per form
-
-      commission earnt
-      revenue
-    */
-
+    //get the results for a certain period
     const results = yield this.query('2016 | 01', '2016 | 53');
 
+    //structure of the json
     var pruned_results = {
-      utm_params: {
-        utm_term: [],
-        utm_source: [],
-        utm_name: [],
-        utm_content: []
-      },
-      activity: {
-        id: [],
-      },
-      sessions: {
-        total_unique: 0,
-        total_unique_ids: []
-      },
-      users: {
-        unique: 0,
-        unique_list: []
-      }
-    };
+        utm_params: {
+          utm_term: [],
+          utm_source: [],
+          utm_name: [],
+          utm_content: []
+        },
+        activity: {
+          id: [],
+          sum_leads_soi: 0,
+          sum_leads_active: 0,
+          sum_leads_direct: 0,
+          sum_leads_assisted: 0,
+          sum_leads_active_direct: 0
+        },
+        sessions: {
+          total_unique: 0,
+          total_unique_ids: []
+        },
+        users: {
+          unique: 0,
+          unique_list: []
+        }
+      };
 
-    var iso_week_copy = pruned_results;
     _.forEach(results[0], function (value) {
 
       //format for the iso_week (copy of pruned_results basically) all iso_weeks added together should equal 
@@ -98,6 +92,11 @@ class ReportController {
         },
         activity: {
           id: [],
+          sum_leads_soi: 0,
+          sum_leads_active: 0,
+          sum_leads_direct: 0,
+          sum_leads_assisted: 0,
+          sum_leads_active_direct: 0
         },
         sessions: {
           total_unique: 0,
@@ -121,34 +120,52 @@ class ReportController {
 
       //activity info 
       pruned_results.activity.id.push(value.activity_id);
-      pruned_results.
+      pruned_results.activity.sum_leads_soi = pruned_results.activity.sum_leads_soi + value.sum_leads_soi;
+      pruned_results.activity.sum_leads_active = pruned_results.activity.sum_leads_active + value.sum_leads_active;
+      pruned_results.activity.sum_leads_direct = pruned_results.activity.sum_leads_direct + value.sum_leads_direct;
+      pruned_results.activity.sum_leads_assisted = pruned_results.activity.sum_leads_assisted + value.sum_leads_assisted;
+      pruned_results.activity.sum_leads_active_direct = pruned_results.activity.sum_leads_active_direct + value.sum_leads_active_direct;
 
-      if (pruned_results[value.iso_week]) { // if the week already exists, append data to it
-        //sessions
-
+      // if the week already exists, append data to it
+      if (pruned_results[value.iso_week]) {
+        
+        //access to the iso_week
         var s = pruned_results[value.iso_week];
 
+        //sessions
         iso_week.sessions.total_unique = s.sessions.total_unique + value.unique_sessions;
+        
         //session_ids
         s.sessions.total_unique_ids.push(value.session_id);
         iso_week.sessions.total_unique_ids = s.sessions.total_unique_ids;
 
         //utm params
+        //utm term
         s.utm_params.utm_term.push(value.utm_term);
         iso_week.utm_params.utm_term = s.utm_params.utm_term;
 
+        //utm source
         s.utm_params.utm_source.push(value.utm_source);
         iso_week.utm_params.utm_source = s.utm_params.utm_source;
 
+        //utm name
         s.utm_params.utm_name.push(value.utm_name);
         iso_week.utm_params.utm_name = s.utm_params.utm_name;
 
+        //utm content
         s.utm_params.utm_content.push(value.utm_content);
         iso_week.utm_params.utm_content = s.utm_params.utm_content;
 
         //activity info
         s.activity.id.push(value.activity_id);
         iso_week.activity.id = s.activity.id;
+
+        //sum of leads by type (opportunity_type)
+        iso_week.activity.sum_leads_soi = s.activity.sum_leads_soi + value.sum_leads_soi;
+        iso_week.activity.sum_leads_active = s.activity.sum_leads_active + value.sum_leads_active;
+        iso_week.activity.sum_leads_direct = s.activity.sum_leads_direct + value.sum_leads_direct;
+        iso_week.activity.sum_leads_assisted = s.activity.sum_leads_assisted + value.sum_leads_assisted;
+        iso_week.activity.sum_leads_active_direct = s.activity.sum_leads_active_direct + value.sum_leads_active_direct;
 
       } else { //new week, do this
 
@@ -164,42 +181,18 @@ class ReportController {
 
         //activity info
         iso_week.activity.id.push(value.activity_id);
+
+        iso_week.activity.sum_leads_soi = value.sum_leads_soi;
+        iso_week.activity.sum_leads_active = value.sum_leads_active;
+        iso_week.activity.sum_leads_direct = value.sum_leads_direct;
+        iso_week.activity.sum_leads_assisted = value.sum_leads_assisted;
+        iso_week.activity.sum_leads_active_direct = value.sum_leads_active_direct;
       }
 
       pruned_results[value.iso_week] = iso_week;
     });
 
     return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
-  }
-
-  // * weekly (request, response) {
-  //   const results = yield Database
-  //                         .table('sessions')
-  //                         .leftJoin('')
-  // }
-
-  * create(request, response) {
-    //
-  }
-
-  * store(request, response) {
-    //
-  }
-
-  * show(request, response) {
-    //
-  }
-
-  * edit(request, response) {
-    //
-  }
-
-  * update(request, response) {
-    //
-  }
-
-  * destroy(request, response) {
-    //
   }
 
 }
