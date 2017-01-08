@@ -1,6 +1,5 @@
 'use strict'
 
-const Session = use('App/Model/Session')
 const Database = use('Database')
 
 const _ = use('lodash')
