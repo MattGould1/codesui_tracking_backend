@@ -6,6 +6,7 @@ class ActivityTableSchema extends Schema {
 
   up () {
     this.create('activity', (table) => {
+      table.increments()
       table.string('activity_type')
       table.string('opportunity_type')
       table.string('session_id')
