@@ -49,9 +49,25 @@ class ReportController {
     return results;
   }
 
-
   cohortQuery(iso_start, iso_end) {
+    const results = Database.select(
+                              'sessions.session_id AS session_id', 
+                              'sessions.utm_source AS utm_source',
+                              'sessions.utm_medium AS utm_medium',
+                              'sessions.utm_name  AS utm_name',
+                              'activity.activity_id AS activity_id',
+                              'activity.opportunity_type AS activity_type',
+                              'users.created_at AS user_creation',
+                              'users.email AS user_id'
+                            )
+                            .from('sessions')
+                            .leftJoin('users', 'users.session_id', 'sessions.session_id')
+                            .leftJoin('activity', 'activity.session_id', 'sessions.session_id')
+                            .where('users.email', '<>', '')
+                            .groupBy('users.email')
+                            .limit(10);
 
+    return results;
   }
 
   * index(request, response) {
@@ -201,7 +217,9 @@ class ReportController {
   }
 
   * cohortReport (request, response) {
-    
+    const results = yield this.cohortQuery('2016 | 01', '2016 | 53');
+
+    return response.send('<pre>' + JSON.stringify(results, null, 4) + '</pre>');
   }
 }
 
