@@ -21,13 +21,12 @@ Route.on('/').render('welcome')
 
 //all of the public api routes - mainly used for saving data from user sessions
 Route.group('public', function () {
-	Route.post('session/create', 'SessionController.create');
+
+	Route.post('activity/create', 'ActivityController.create');
 	Route.post('session/initiate', 'SessionController.initiate');
 	Route.get('report', 'ReportController.index');
 	Route.get('cohortReport', 'ReportController.cohortReport');
 
-
-	Route.post('activity/create', 'ActivityController.create');
 });
 
 //all of the logged in stuff
