@@ -1,9 +1,9 @@
 'use strict'
 
 const User = use('App/Model/User')
+const Activity = use('App/Model/Activity')
 
 class ActivityController {
-
   /*
     Create a user, update activity
 
@@ -17,19 +17,30 @@ class ActivityController {
     }
   */
   * create (request, response) {
-    const body = request.all();
-    const user = yield User.query()
-                           .insert({
-                             email: body.email,
-                             session_id: body.session_id,
-                             location: null, //add this to the form later?
-                             age: null,
-                             gender: null,
-                             purchase_made: body.purchase_id,
-                             activity_id: body.activity_id
-                           });
+    const body = request.all()
 
-    response.send(true);
+    const user = new User()
+
+    user.email = body.email
+    user.session_id = body.session_id
+    user.location = ''
+    user.age = ''
+    user.gender = ''
+    user.purchase_made = body.purchase_id
+    user.activity_id = ''
+
+    yield user.save()
+
+    const activity = new Activity()
+
+    activity.session_id = body.session_id
+    activity.user_id = user.id
+    activity.activity_id = body.activity_id
+    activity.activity_type = body.activity_id //fix this later
+
+    yield user.activity().save(activity)
+
+    response.send(true)
   }
 
 }
