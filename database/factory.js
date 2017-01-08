@@ -12,7 +12,6 @@
 */
 
 const Factory = use('Factory')
-
 const Database = use('Database')
 
 /*
@@ -24,6 +23,14 @@ const Database = use('Database')
 |
 */
 Factory.blueprint('App/Model/User', (fake) => {
+
+  var session_id = [
+    'one',
+    'two',
+    'three',
+    'four',
+  ];
+  
   return {
     username: fake.username(),
     email: fake.email(),
@@ -39,16 +46,20 @@ Factory.blueprint('activity', (fake) => {
   ];
 
   var opportunity_type = [
-    '1a',
-    '1b',
-    '1c',
-    '2a',
-    '2b',
-    '2c'
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
   ];
-  const Session = use('App/Model/Session')
 
-  const session_id = Session.ids()
+  var session_id = [
+    'one',
+    'two',
+    'three',
+    'four',
+  ];
 
   return {
     activity_type: fake.pickone(activity_type),
@@ -93,20 +104,29 @@ Factory.blueprint('sessions', (fake) => {
     'www.github.com',
     'www.github.com',
     'www.github.com',
+    'www.bbc.com',
     'www.github.com',
     'www.github.com',
     'www.github.com',
-    'www.github.com',
-    'www.github.com',
-    'www.gitlab.com', //just coz
+    'www.facebook.com',
+    'www.google.com', //just coz
   ];
 
   var utm_content = [
     'website',
     'email'
   ];
+
+  var session_id = [
+    'one',
+    'two',
+    'three',
+    'four',
+    'five'
+  ];
+
   return {
-    id: fake.guid(),
+    session_id: fake.pickone(session_id),
     utm_source: fake.pickone(utm_source),
     utm_medium: fake.string(20),
     utm_name: fake.pickone(utm_name),
