@@ -30,8 +30,18 @@ Factory.blueprint('App/Model/User', (fake) => {
     'three',
     'four',
   ];
-  
+
+  var location = [
+    'thailand',
+    'england'
+  ];
+
   return {
+    session_id: fake.pickone(session_id),
+    location: fake.pickone(location),
+    age: fake.age(),
+    gender: fake.gender(),
+    purchase_made: fake.bool(),
     username: fake.username(),
     email: fake.email(),
     password: fake.password()
