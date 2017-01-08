@@ -25,6 +25,9 @@ Route.group('public', function () {
 	Route.post('session/initiate', 'SessionController.initiate');
 	Route.get('report', 'ReportController.index');
 	Route.get('cohortReport', 'ReportController.cohortReport');
+
+
+	Route.post('activity/create', 'ActivityController.create');
 });
 
 //all of the logged in stuff
