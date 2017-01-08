@@ -219,7 +219,7 @@ class ReportController {
   * cohortReport (request, response) {
     const results = yield this.cohortQuery('2016 | 01', '2016 | 53');
 
-    return response.send('<pre>' + JSON.stringify(results, null, 4) + '</pre>');
+    return response.json(results);
   }
 }
 
