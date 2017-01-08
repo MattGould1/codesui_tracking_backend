@@ -49,6 +49,11 @@ class ReportController {
     return results;
   }
 
+
+  cohortQuery(iso_start, iso_end) {
+
+  }
+
   * index(request, response) {
 
     //get the results for a certain period
