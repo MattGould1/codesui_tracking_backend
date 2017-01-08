@@ -200,6 +200,9 @@ class ReportController {
     return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
   }
 
+  * cohortReport (request, response) {
+    
+  }
 }
 
 module.exports = ReportController
