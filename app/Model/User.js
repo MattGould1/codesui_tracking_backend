@@ -1,7 +1,7 @@
 'use strict'
 
 const Lucid = use('Lucid')
-const Hash = use('Hash')
+//const Hash = use('Hash')
 
 class User extends Lucid {
 
@@ -12,10 +12,10 @@ class User extends Lucid {
      * Hashing password before storing to the
      * database.
      */
-    this.addHook('beforeCreate', function * (next) {
-      this.password = yield Hash.make(this.password)
-      yield next
-    })
+    // this.addHook('beforeCreate', function * (next) {
+    //   this.password = yield Hash.make(this.password)
+    //   yield next
+    // })
   }
 
   apiTokens () {
@@ -26,7 +26,7 @@ class User extends Lucid {
     return this.hasMany('App/Model/Session')
   }
 
-  activities () {
+  activity () {
     return this.hasMany('App/Model/Activity')
   }
 }
