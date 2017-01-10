@@ -20,23 +20,15 @@ class ReportController {
           COUNT(CASE
               WHEN A.opportunity_type = 1 THEN 1
               ELSE NULL
-          END) AS sum_leads_soi,
+          END) AS sum_leads_contact,
           COUNT(CASE
               WHEN A.opportunity_type = 2 THEN 1
               ELSE NULL
-          END) AS sum_leads_active,
+          END) AS sum_leads_subscribe,
           COUNT(CASE
               WHEN A.opportunity_type = 3 THEN 1
               ELSE NULL
-          END) AS sum_leads_direct,
-          COUNT(CASE
-              WHEN A.opportunity_type = 4 THEN 1
-              ELSE NULL
-          END) AS sum_leads_assisted,
-          COUNT(CASE
-              WHEN A.opportunity_type = 5 THEN 1
-              ELSE NULL
-          END) AS sum_leads_active_direct
+          END) AS sum_leads_purchase
       FROM
           sessions AS S
               LEFT JOIN
@@ -97,7 +89,8 @@ class ReportController {
         users: {
           unique: 0,
           unique_list: []
-        }
+        },
+        time: {}
       };
 
     _.forEach(results[0], function (value) {
@@ -125,7 +118,9 @@ class ReportController {
         users: {
           unique: 0,
           unique_list: []
-        }
+        },
+        time: {},
+        week: ''
       };
 
       //sessions
@@ -147,10 +142,10 @@ class ReportController {
       pruned_results.activity.sum_leads_active_direct = pruned_results.activity.sum_leads_active_direct + value.sum_leads_active_direct;
 
       // if the week already exists, append data to it
-      if (pruned_results[value.iso_week]) {
+      if (pruned_results.time[value.iso_week]) {
         
         //access to the iso_week
-        var s = pruned_results[value.iso_week];
+        var s = pruned_results.time[value.iso_week];
 
         //sessions
         iso_week.sessions.total_unique = s.sessions.total_unique + value.unique_sessions;
@@ -201,7 +196,7 @@ class ReportController {
 
         //activity info
         iso_week.activity.id.push(value.activity_id);
-
+        iso_week.week = value.iso_week;
         iso_week.activity.sum_leads_soi = value.sum_leads_soi;
         iso_week.activity.sum_leads_active = value.sum_leads_active;
         iso_week.activity.sum_leads_direct = value.sum_leads_direct;
@@ -209,9 +204,10 @@ class ReportController {
         iso_week.activity.sum_leads_active_direct = value.sum_leads_active_direct;
       }
 
-      pruned_results[value.iso_week] = iso_week;
+      pruned_results.time[value.iso_week] = iso_week;
     });
 
+    // return response.json(pruned_results);
     return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
   }
 
