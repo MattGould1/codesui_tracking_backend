@@ -122,6 +122,7 @@ Factory.blueprint('sessions', (fake) => {
     'facebookads',
     'newspaper'
   ];
+
   var utm_host_name = [
     'www.github.com',
     'www.github.com',
@@ -142,7 +143,7 @@ Factory.blueprint('sessions', (fake) => {
     utm_medium: fake.string(utm_medium),
     utm_name: fake.pickone(utm_name),
     utm_term: fake.pickone(utm_term),
-    utm_content: fake.string(utm_contnet),
+    utm_content: fake.string(utm_content),
     host_name: fake.pickone(utm_host_name),
     iso_week: fake.pickone(iso_weeks),
   }
