@@ -70,29 +70,29 @@ class ReportController {
 
     //structure of the json
     var pruned_results = {
-        utm_params: {
-          utm_term: [],
-          utm_source: [],
-          utm_name: [],
-          utm_content: []
-        },
-        activity: {
-          id: [],
-          sum_leads_contact: 0,
-          sum_leads_subscribe: 0,
-          sum_leads_purchase: 0,
-          billed: 0
-        },
-        sessions: {
-          total_unique: 0,
-          total_unique_ids: []
-        },
-        users: {
-          unique: 0,
-          unique_list: []
-        },
-        time: {}
-      };
+      utm_params: {
+        utm_term: [],
+        utm_source: [],
+        utm_name: [],
+        utm_content: []
+      },
+      activity: {
+        id: [],
+        sum_leads_contact: 0,
+        sum_leads_subscribe: 0,
+        sum_leads_purchase: 0,
+        billed: 0
+      },
+      sessions: {
+        total_unique: 0,
+        total_unique_ids: []
+      },
+      users: {
+        unique: 0,
+        unique_list: []
+      },
+      time: {}
+    };
 
     _.forEach(results[0], function (value) {
 
