@@ -40,7 +40,7 @@ class ReportController {
       FROM
           sessions AS S
               LEFT JOIN
-          activity AS A ON S.session_id = A.session_id
+          activities AS A ON S.session_id = A.session_id
       -- WHERE S.iso_week BETWEEN '2016 | 22' AND '2016 | 23'
       GROUP BY S.iso_week , S.utm_term , S.utm_source , S.utm_name , S.utm_content
     `);
@@ -54,14 +54,14 @@ class ReportController {
                               'sessions.utm_source AS utm_source',
                               'sessions.utm_medium AS utm_medium',
                               'sessions.utm_name  AS utm_name',
-                              'activity.activity_id AS activity_id',
-                              'activity.opportunity_type AS activity_type',
+                              'activities.activity_id AS activity_id',
+                              'activities.opportunity_type AS activity_type',
                               'users.created_at AS user_creation',
                               'users.email AS user_id'
                             )
                             .from('sessions')
                             .leftJoin('users', 'users.session_id', 'sessions.session_id')
-                            .leftJoin('activity', 'activity.session_id', 'sessions.session_id')
+                            .leftJoin('activities', 'activities.session_id', 'sessions.session_id')
                             .where('users.email', '<>', '')
                             .groupBy('users.email')
                             .limit(10);
