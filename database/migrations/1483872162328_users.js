@@ -7,8 +7,6 @@ class UsersTableSchema extends Schema {
   up () {
     this.table('users', (table) => {
       // alter users table
-      table.dropColumn('username')
-      table.dropColumn('password')
     })
   }
 
