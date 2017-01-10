@@ -7,4 +7,4 @@ class TestController {
   }
 }
 
-module.exports = ReportController
+module.exports = TestController
