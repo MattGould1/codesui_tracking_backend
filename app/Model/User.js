@@ -27,7 +27,7 @@ class User extends Lucid {
   }
 
   activity () {
-    return this.hasMany('App/Model/Activity')
+    return this.hasOne('App/Model/Activity')
   }
 }
 
