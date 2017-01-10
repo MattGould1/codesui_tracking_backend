@@ -80,7 +80,8 @@ class ReportController {
           id: [],
           sum_leads_contact: 0,
           sum_leads_subscribe: 0,
-          sum_leads_purchase: 0
+          sum_leads_purchase: 0,
+          billed: 0
         },
         sessions: {
           total_unique: 0,
@@ -107,7 +108,8 @@ class ReportController {
           id: [],
           sum_leads_contact: 0,
           sum_leads_subscribe: 0,
-          sum_leads_purchase: 0
+          sum_leads_purchase: 0,
+          billed: 0
         },
         sessions: {
           total_unique: 0,
@@ -136,6 +138,7 @@ class ReportController {
       pruned_results.activity.sum_leads_contact = pruned_results.activity.sum_leads_contact + value.sum_leads_contact;
       pruned_results.activity.sum_leads_subscribe = pruned_results.activity.sum_leads_subscribe + value.sum_leads_subscribe
       pruned_results.activity.sum_leads_purchase = pruned_results.activity.sum_leads_purchase + value.sum_leads_purchase;
+      pruned_results.activity.billed = pruned_results.activity.billed + value.billed;
 
       // if the week already exists, append data to it
       if (pruned_results.time[value.iso_week]) {
@@ -172,12 +175,12 @@ class ReportController {
         iso_week.activity.id = s.activity.id;
 
         iso_week.week = value.iso_week;
-        
+
         //sum of leads by type (opportunity_type)
         iso_week.activity.sum_leads_contact = s.activity.sum_leads_contact + value.sum_leads_contact;
         iso_week.activity.sum_leads_subscribe = s.activity.sum_leads_subscribe + value.sum_leads_subscribe;
         iso_week.activity.sum_leads_purchase = s.activity.sum_leads_purchase + value.sum_leads_purchase;
-
+        iso_week.activity.billed = s.activity.billed + value.billed;
       } else { //new week, do this
 
         //sessions
@@ -196,6 +199,7 @@ class ReportController {
         iso_week.activity.sum_leads_contact = value.sum_leads_contact;
         iso_week.activity.sum_leads_subscribe = value.sum_leads_subscribe;
         iso_week.activity.sum_leads_purchase = value.sum_leads_purchase;
+        iso_week.activity.billed = value.billed;
       }
 
       pruned_results.time[value.iso_week] = iso_week;
