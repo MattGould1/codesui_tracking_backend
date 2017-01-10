@@ -84,11 +84,15 @@ Factory.blueprint('activity', (fake) => {
 Factory.blueprint('sessions', (fake) => {
 
   var iso_weeks = [
-    '2016 | 21',
-    '2016 | 22',
-    '2016 | 23',
-    '2016 | 24',
-    '2016 | 25',
+    '2016 | 46',
+    '2016 | 47',
+    '2016 | 48',
+    '2016 | 49',
+    '2016 | 50',
+    '2016 | 51',
+    '2016 | 52',
+    '2017 | 01',
+    '2017 | 02'
   ];
 
   var utm_source = [
@@ -108,6 +112,16 @@ Factory.blueprint('sessions', (fake) => {
     'php'
   ];
 
+  var utm_medium = [
+    'banner',
+    'email'
+  ];
+
+  var utm_content = [
+    'googleads',
+    'facebookads',
+    'newspaper'
+  ];
   var utm_host_name = [
     'www.github.com',
     'www.github.com',
@@ -122,26 +136,13 @@ Factory.blueprint('sessions', (fake) => {
     'www.google.com', //just coz
   ];
 
-  var utm_content = [
-    'website',
-    'email'
-  ];
-
-  var session_id = [
-    'one',
-    'two',
-    'three',
-    'four',
-    'five'
-  ];
-
   return {
-    session_id: fake.pickone(session_id),
+    session_id: fake.fbid(),
     utm_source: fake.pickone(utm_source),
-    utm_medium: fake.string(20),
+    utm_medium: fake.string(utm_medium),
     utm_name: fake.pickone(utm_name),
     utm_term: fake.pickone(utm_term),
-    utm_content: fake.string(20),
+    utm_content: fake.string(utm_contnet),
     host_name: fake.pickone(utm_host_name),
     iso_week: fake.pickone(iso_weeks),
   }
