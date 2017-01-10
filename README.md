@@ -105,3 +105,6 @@ There are a lot of other filters, if I have time I'll list and describe them in 
 * Overall Purchase Completition
 
 ### Don't forget to go and install the client for UI reports!
+
+
+<div></div>
