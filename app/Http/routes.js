@@ -27,6 +27,8 @@ Route.group('public', function () {
 	Route.get('report', 'ReportController.index');
 	Route.get('cohortReport', 'ReportController.cohortReport');
 
+	Route.get('test', 'TestController.test');
+
 });
 
 //all of the logged in stuff
