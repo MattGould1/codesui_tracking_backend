@@ -8,33 +8,35 @@ class ReportController {
 
   query(start_iso, end_iso) {
     const results = Database.raw(`
-      SELECT
-          S.id AS session_id,
-          S.iso_week AS iso_week,
-          S.utm_term AS utm_term,
-          S.utm_source AS utm_source,
-          S.utm_name AS utm_name,
-          S.utm_content AS utm_content,
-          COUNT(A.id) AS activity_id,
-          COUNT(DISTINCT S.session_id) AS unique_sessions,
-          COUNT(CASE
-              WHEN A.opportunity_type = 1 THEN 1
-              ELSE NULL
-          END) AS sum_leads_contact,
-          COUNT(CASE
-              WHEN A.opportunity_type = 2 THEN 1
-              ELSE NULL
-          END) AS sum_leads_subscribe,
-          COUNT(CASE
-              WHEN A.opportunity_type = 3 THEN 1
-              ELSE NULL
-          END) AS sum_leads_purchase
-      FROM
-          sessions AS S
-              LEFT JOIN
-          activities AS A ON S.session_id = A.session_id
-      -- WHERE S.iso_week BETWEEN '2016 | 22' AND '2016 | 23'
-      GROUP BY S.iso_week , S.utm_term , S.utm_source , S.utm_name , S.utm_content
+      SELECT 
+        S.id AS session_id,
+        S.iso_week AS iso_week,
+        S.utm_term AS utm_term,
+        S.utm_source AS utm_source,
+        S.utm_name AS utm_name,
+        S.utm_content AS utm_content,
+        COUNT(A.id) AS activity_id,
+        COUNT(U.purchase_made) AS billed,
+        COUNT(DISTINCT S.session_id) AS unique_sessions,
+        COUNT(CASE
+            WHEN A.opportunity_type = 1 THEN 1
+            ELSE NULL
+        END) AS sum_leads_contact,
+        COUNT(CASE
+            WHEN A.opportunity_type = 2 THEN 1
+            ELSE NULL
+        END) AS sum_leads_subscribe,
+        COUNT(CASE
+            WHEN A.opportunity_type = 3 THEN 1
+            ELSE NULL
+        END) AS sum_leads_purchase
+    FROM
+        sessions AS S
+            LEFT JOIN
+        activities AS A ON S.session_id = A.session_id
+        LEFT JOIN
+      users AS U on A.session_id = U.session_id
+    GROUP BY S.iso_week , S.utm_term , S.utm_source , S.utm_name , S.utm_content
     `);
 
     return results;
