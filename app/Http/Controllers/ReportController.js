@@ -76,11 +76,9 @@ class ReportController {
         },
         activity: {
           id: [],
-          sum_leads_soi: 0,
-          sum_leads_active: 0,
-          sum_leads_direct: 0,
-          sum_leads_assisted: 0,
-          sum_leads_active_direct: 0
+          sum_leads_contact: 0,
+          sum_leads_subscribe: 0,
+          sum_leads_purchase: 0
         },
         sessions: {
           total_unique: 0,
@@ -105,11 +103,9 @@ class ReportController {
         },
         activity: {
           id: [],
-          sum_leads_soi: 0,
-          sum_leads_active: 0,
-          sum_leads_direct: 0,
-          sum_leads_assisted: 0,
-          sum_leads_active_direct: 0
+          sum_leads_contact: 0,
+          sum_leads_subscribe: 0,
+          sum_leads_purchase: 0
         },
         sessions: {
           total_unique: 0,
@@ -135,11 +131,9 @@ class ReportController {
 
       //activity info 
       pruned_results.activity.id.push(value.activity_id);
-      pruned_results.activity.sum_leads_soi = pruned_results.activity.sum_leads_soi + value.sum_leads_soi;
-      pruned_results.activity.sum_leads_active = pruned_results.activity.sum_leads_active + value.sum_leads_active;
-      pruned_results.activity.sum_leads_direct = pruned_results.activity.sum_leads_direct + value.sum_leads_direct;
-      pruned_results.activity.sum_leads_assisted = pruned_results.activity.sum_leads_assisted + value.sum_leads_assisted;
-      pruned_results.activity.sum_leads_active_direct = pruned_results.activity.sum_leads_active_direct + value.sum_leads_active_direct;
+      pruned_results.activity.sum_leads_contact = pruned_results.activity.sum_leads_contact + value.sum_leads_contact;
+      pruned_results.activity.sum_leads_subscribe = pruned_results.activity.sum_leads_subscribe + value.sum_leads_subscribe
+      pruned_results.activity.sum_leads_purchase = pruned_results.activity.sum_leads_purchase + value.sum_leads_purchase;
 
       // if the week already exists, append data to it
       if (pruned_results.time[value.iso_week]) {
@@ -175,12 +169,12 @@ class ReportController {
         s.activity.id.push(value.activity_id);
         iso_week.activity.id = s.activity.id;
 
+        iso_week.week = value.iso_week;
+        
         //sum of leads by type (opportunity_type)
-        iso_week.activity.sum_leads_soi = s.activity.sum_leads_soi + value.sum_leads_soi;
-        iso_week.activity.sum_leads_active = s.activity.sum_leads_active + value.sum_leads_active;
-        iso_week.activity.sum_leads_direct = s.activity.sum_leads_direct + value.sum_leads_direct;
-        iso_week.activity.sum_leads_assisted = s.activity.sum_leads_assisted + value.sum_leads_assisted;
-        iso_week.activity.sum_leads_active_direct = s.activity.sum_leads_active_direct + value.sum_leads_active_direct;
+        iso_week.activity.sum_leads_contact = s.activity.sum_leads_contact + value.sum_leads_contact;
+        iso_week.activity.sum_leads_subscribe = s.activity.sum_leads_subscribe + value.sum_leads_subscribe;
+        iso_week.activity.sum_leads_purchase = s.activity.sum_leads_purchase + value.sum_leads_purchase;
 
       } else { //new week, do this
 
@@ -197,18 +191,16 @@ class ReportController {
         //activity info
         iso_week.activity.id.push(value.activity_id);
         iso_week.week = value.iso_week;
-        iso_week.activity.sum_leads_soi = value.sum_leads_soi;
-        iso_week.activity.sum_leads_active = value.sum_leads_active;
-        iso_week.activity.sum_leads_direct = value.sum_leads_direct;
-        iso_week.activity.sum_leads_assisted = value.sum_leads_assisted;
-        iso_week.activity.sum_leads_active_direct = value.sum_leads_active_direct;
+        iso_week.activity.sum_leads_contact = value.sum_leads_contact;
+        iso_week.activity.sum_leads_subscribe = value.sum_leads_subscribe;
+        iso_week.activity.sum_leads_purchase = value.sum_leads_purchase;
       }
 
       pruned_results.time[value.iso_week] = iso_week;
     });
 
-    // return response.json(pruned_results);
-    return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
+    return response.json(pruned_results);
+    // return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
   }
 
   * cohortReport (request, response) {
