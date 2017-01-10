@@ -17,10 +17,10 @@ const Factory = use('Factory')
 class DatabaseSeeder {
 
   * run () {
-	yield Factory.model('App/Model/User').create(2)
+	//yield Factory.model('App/Model/User').create(300)
 
-    //yield Factory.get('sessions').create(5)
-    //yield Factory.get('activity').create(3)
+    //yield Factory.get('sessions').create(500)
+    yield Factory.get('activities').create(200)
   }
 
 }
