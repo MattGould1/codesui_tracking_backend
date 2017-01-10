@@ -62,6 +62,9 @@ At a glance reports show you (time by time) breakdowns of sessions created, conv
 ## Full Reports
 Full reports have all data that we track and provide A LOT of filters to look through. I'll update this when I have time.
 
+## Cohort Reports
+Cohort reports give you an idea of what individual users are doing, whether they are taking multiple actions, one, and how they ultimately progress to make a purchase.
+
 # Report Specifics
 ### Activity_type
 Out of the box, we support 3 activity types and they correlate to what a customer is (in general) doing. We've broke it down into Contact (1), Subscribe (2) and Purchase (3). You can easily add your own types into our system like so...
