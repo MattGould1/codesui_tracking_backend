@@ -119,6 +119,78 @@ There are a lot of other filters, if I have time I'll list and describe them in 
 # Graphs (weekly, monthly)
 Graphs are very good for displaying and comparing large datasets. We find that our at a glance reports are good for small chunks of data (say 10 weeks) but for 100 weeks? There's just too much on a screen. Graphs help us solve a big problem - viewing trends across large datasets. 	
 
+# JSON
+
+## JSON FOR REPORTS
+```
+    var pruned_results = {
+      utm_params: {
+        utm_term: [],
+        utm_source: [],
+        utm_name: [],
+        utm_content: []
+      },
+      activity: {
+        id: [],
+        sum_leads_contact: 0,
+        sum_leads_subscribe: 0,
+        sum_leads_purchase: 0,
+        billed: 0
+      },
+      sessions: {
+        total_unique: 0,
+        total_unique_ids: []
+      },
+      users: {
+        unique: 0,
+        unique_list: []
+      },
+      time: {}
+    };
+```
+
+## JSON for creating session
+```
+  session_id,
+  utmTags {
+    source,
+    medium,
+    campaign,
+    term,
+    content
+  },
+  domain
+```
+## JSON for creating user (same as activity)
+```
+  session_id: 'b38bm9b5fo13114o363b109e956a96e2fo193',
+  email: 'wer@wrewer',
+  opportunity_type: '3',
+  activity_id: 'null',
+  purchase_id: 'default'
+```
+
+## JSON for creating activity (same as user)
+```
+  session_id: 'b38bm9b5fo13114o363b109e956a96e2fo193',
+  email: 'wer@wrewer',
+  opportunity_type: '3',
+  activity_id: 'null',
+  purchase_id: 'default'
+```
+
+## JSON for cohort query
+```
+	session_id,
+	utm_source,
+	utm_medium,
+	utm_name,
+	activity_id,
+	activity_type,
+	user_creation,
+	user_id
+```
+
 ### Don't forget to go and install the client for UI reports!
 
 
