@@ -57,8 +57,7 @@ class ReportController {
                             .leftJoin('users', 'users.session_id', 'sessions.session_id')
                             .leftJoin('activities', 'activities.session_id', 'sessions.session_id')
                             .where('users.email', '<>', '')
-                            .groupBy('users.email')
-                            .limit(10);
+                            .groupBy('users.email');
 
     return results;
   }
