@@ -1,43 +1,41 @@
 'use strict'
 
 const Database = use('Database')
-
 const _ = use('lodash')
 
 class ReportController {
 
-  query(start_iso, end_iso) {
-    const results = Database.raw(`
-      SELECT 
-        S.id AS session_id,
-        S.iso_week AS iso_week,
-        S.utm_term AS utm_term,
-        S.utm_source AS utm_source,
-        S.utm_name AS utm_name,
-        S.utm_content AS utm_content,
-        COUNT(A.id) AS activity_id,
-        COUNT(U.purchase_made) AS billed,
-        COUNT(DISTINCT S.session_id) AS unique_sessions,
-        COUNT(CASE
-            WHEN A.opportunity_type = 1 THEN 1
-            ELSE NULL
-        END) AS sum_leads_contact,
-        COUNT(CASE
-            WHEN A.opportunity_type = 2 THEN 1
-            ELSE NULL
-        END) AS sum_leads_subscribe,
-        COUNT(CASE
-            WHEN A.opportunity_type = 3 THEN 1
-            ELSE NULL
-        END) AS sum_leads_purchase
-    FROM
-        sessions AS S
-            LEFT JOIN
-        activities AS A ON S.session_id = A.session_id
-        LEFT JOIN
-      users AS U on A.session_id = U.session_id
-    GROUP BY S.iso_week , S.utm_term , S.utm_source , S.utm_name , S.utm_content
-    `);
+  query(start_iso, end_iso, filters) {
+    const results = Database.select(
+                              'sessions.id AS session_id',
+                              'sessions.iso_week AS iso_week',
+                              'sessions.utm_term AS utm_term',
+                              'sessions.utm_source AS utm_source',
+                              'sessions.utm_name AS utm_name',
+                              'sessions.utm_content AS utm_content',
+                              'sessions.utm_medium AS utm_medium',
+                              Database.raw(`COUNT(activities.id) AS activity_id`),
+                              Database.raw(`COUNT(users.purchase_made) AS billed`),
+                              Database.raw(`COUNT(DISTINCT sessions.session_id) AS unique_sessions`),
+                              Database.raw(`COUNT(CASE
+                                WHEN activities.opportunity_type = 1 THEN 1
+                                ELSE NULL
+                              END) AS sum_leads_contact`),
+                              Database.raw(`COUNT(CASE
+                                WHEN activities.opportunity_type = 2 THEN 1
+                                ELSE NULL
+                              END) AS sum_leads_subscribe`),
+                              Database.raw(`COUNT(CASE
+                                WHEN activities.opportunity_type = 3 THEN 1
+                                ELSE NULL
+                              END) AS sum_leads_purchase`)
+                            )
+                            .from('sessions')
+                            .leftJoin('activities', 'sessions.session_id', 'activities.session_id')
+                            .leftJoin('users', 'activities.session_id', 'users.session_id')
+                            .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
+  
+    // results.whereIn('S.utm_name', ['awesome', 'vuejs'])
 
     return results;
   }
@@ -63,9 +61,10 @@ class ReportController {
   }
 
   * index(request, response) {
+    var filters = request.all();
 
     //get the results for a certain period
-    const results = yield this.query('2016 | 01', '2016 | 53');
+    const results = yield this.query('2016 | 01', '2016 | 53', filters);
 
     //structure of the json
     var pruned_results = {
@@ -73,7 +72,8 @@ class ReportController {
         utm_term: [],
         utm_source: [],
         utm_name: [],
-        utm_content: []
+        utm_content: [],
+        utm_medium: []
       },
       activity: {
         id: [],
@@ -90,10 +90,11 @@ class ReportController {
         unique: 0,
         unique_list: []
       },
+      filter_options: {},
       time: {}
     };
 
-    _.forEach(results[0], function (value) {
+    _.forEach(results, function (value) {
 
       //format for the iso_week (copy of pruned_results basically) all iso_weeks added together should equal 
       var iso_week = {
@@ -101,7 +102,8 @@ class ReportController {
           utm_term: [],
           utm_source: [],
           utm_name: [],
-          utm_content: []
+          utm_content: [],
+          utm_medium: []
         },
         activity: {
           id: [],
@@ -131,6 +133,7 @@ class ReportController {
       pruned_results.utm_params.utm_source.push(value.utm_source);
       pruned_results.utm_params.utm_name.push(value.utm_name);
       pruned_results.utm_params.utm_content.push(value.utm_content);
+      pruned_results.utm_params.utm_medium.push(value.utm_medium);
 
       //activity info 
       pruned_results.activity.id.push(value.activity_id);
@@ -169,6 +172,10 @@ class ReportController {
         s.utm_params.utm_content.push(value.utm_content);
         iso_week.utm_params.utm_content = s.utm_params.utm_content;
 
+        //utm medium
+        s.utm_params.utm_medium.push(value.utm_medium);
+        iso_week.utm_params.utm_medium = s.utm_params.utm_medium;
+
         //activity info
         s.activity.id.push(value.activity_id);
         iso_week.activity.id = s.activity.id;
@@ -191,6 +198,7 @@ class ReportController {
         iso_week.utm_params.utm_source.push(value.utm_source);
         iso_week.utm_params.utm_name.push(value.utm_name);
         iso_week.utm_params.utm_content.push(value.utm_content);
+        iso_week.utm_params.utm_medium.push(value.utm_medium);
 
         //activity info
         iso_week.activity.id.push(value.activity_id);
@@ -204,8 +212,16 @@ class ReportController {
       pruned_results.time[value.iso_week] = iso_week;
     });
 
+    pruned_results.filter_options.utm_params = {
+      utm_term: _.uniq(pruned_results.utm_params.utm_term),
+      utm_source: _.uniq(pruned_results.utm_params.utm_source),
+      utm_name: _.uniq(pruned_results.utm_params.utm_name),
+      utm_content: _.uniq(pruned_results.utm_params.utm_content),
+      utm_medium: _.uniq(pruned_results.utm_params.utm_medium)
+    }
+
     return response.json(pruned_results);
-    // return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
+    // return response.send('<pre>' + JSON.stringify(results, null, 4) + '</pre>');
   }
 
   * cohortReport (request, response) {
