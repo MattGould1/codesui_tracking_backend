@@ -2,10 +2,12 @@
 
 const Database = use('Database')
 const _ = use('lodash')
+const moment = use('moment')
 
 class ReportController {
 
   query(start_iso, end_iso, filters) {
+    console.log(filters)
     const results = Database.select(
                               'sessions.id AS session_id',
                               'sessions.iso_week AS iso_week',
@@ -36,13 +38,26 @@ class ReportController {
                             .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
     _.forEach(filters, function(value, index) {
       index = 'sessions.' + index;
-      if (value.length !== 0) {
-        console.log('--------------------')
-        console.log(value)
+
+      if ( index === 'sessions.iso_week' && (value.week_from.length !== 0 || value.week_to.length !=- 0)) {
+        var start = moment(value.week_from).year() + ' | ' + moment(value.week_from).isoWeeks()
+        var end = moment(value.week_to).year() + ' | ' + moment(value.week_to).isoWeeks()
+
+        if (value.week_from === '') {
+          start = '2015 | 52'
+        }
+
+        if (value.week_to === '') {
+          end = moment().year() + ' | ' + moment().isoWeeks()
+        }
+
+        console.log(start)
+        console.log(end)
+        results.whereBetween('sessions.iso_week', [start, end])
+      } else if (index !== 'sessions.iso_week' && value.length !== 0) {
         results.whereIn(index, value)
       }
     })
-    // results.whereIn('S.utm_name', ['awesome', 'vuejs'])
 
     return results;
   }
@@ -68,7 +83,7 @@ class ReportController {
   }
 
   * index(request, response) {
-    Database.on('query', console.log)
+    Database.on('sql', console.log)
     var filters = request.all();
 
     //get the results for a certain period
