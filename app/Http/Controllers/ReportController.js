@@ -34,7 +34,14 @@ class ReportController {
                             .leftJoin('activities', 'sessions.session_id', 'activities.session_id')
                             .leftJoin('users', 'activities.session_id', 'users.session_id')
                             .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
-  
+    _.forEach(filters, function(value, index) {
+      index = 'sessions.' + index;
+      if (value.length !== 0) {
+        console.log('--------------------')
+        console.log(value)
+        results.whereIn(index, value)
+      }
+    })
     // results.whereIn('S.utm_name', ['awesome', 'vuejs'])
 
     return results;
@@ -61,6 +68,7 @@ class ReportController {
   }
 
   * index(request, response) {
+    Database.on('query', console.log)
     var filters = request.all();
 
     //get the results for a certain period
