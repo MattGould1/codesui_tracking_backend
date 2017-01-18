@@ -20,7 +20,7 @@ class ActivityController {
     const body = request.all()
 
     const user = new User()
-    console.log(body);
+
     user.email = body.email
     user.session_id = body.session_id
     user.location = ''
