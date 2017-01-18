@@ -4,11 +4,11 @@ const Lucid = use('Lucid')
 
 class Session extends Lucid {
   user () {
-    return this.belongsTo('App/Model/User')
+    return this.hasOne('App/Model/User')
   }
 
   activity() {
-  	return this.belongsto('App/Model/Activity')
+  	return this.hasMany('App/Model/Activity')
   }
 }
 
