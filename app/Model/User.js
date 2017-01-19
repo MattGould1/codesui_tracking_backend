@@ -23,11 +23,7 @@ class User extends Lucid {
   }
 
   sessions () {
-    return this.belongsTo('App/Model/Session')
-  }
-
-  activity () {
-    return this.hasMany('App/Model/Activity')
+    return this.hasMany('App/Model/Session')
   }
 }
 
