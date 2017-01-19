@@ -125,7 +125,7 @@ Factory.blueprint('App/Model/Session', (fake) => {
   ];
 
   return {
-    session_id: fake.fbid(),
+    id: fake.fbid(),
     utm_source: fake.pickone(utm_source),
     utm_medium: fake.string(utm_medium),
     utm_name: fake.pickone(utm_name),
