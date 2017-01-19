@@ -35,8 +35,8 @@ class ActivityController {
 
     activity.session_id = body.session_id
     activity.user_id = user.id
-    activity.activity_id = body.activity_id
-    activity.activity_type = body.opportunity_id //fix this later
+    activity.activity = body.activity_id //this is the cs_activity (used for filtering)
+    activity.activity_type = body.opportunity_id //fix this later ** this will be the type of activity (further filters)
 
     yield user.activity().save(activity)
 
