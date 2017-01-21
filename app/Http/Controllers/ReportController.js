@@ -33,8 +33,8 @@ class ReportController {
                               END) AS sum_leads_purchase`)
                             )
                             .from('sessions')
-                            .leftJoin('activities', 'sessions.session_id', 'activities.session_id')
-                            .leftJoin('users', 'activities.session_id', 'users.session_id')
+                            .leftJoin('activities', 'sessions.id', 'activities.session_id')
+                            .leftJoin('users', 'sessions.user_id', 'users.id')
                             .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
     _.forEach(filters, function(value, index) {
       index = 'sessions.' + index;
