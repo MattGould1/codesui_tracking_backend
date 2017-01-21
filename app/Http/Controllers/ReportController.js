@@ -94,6 +94,10 @@ class ReportController {
       utm_params: {
         utm_term: [],
         utm_source: [],
+        source: [],
+        activity: [],
+        country: [],
+        city: [],
         utm_name: [],
         utm_content: [],
         utm_medium: []
@@ -124,6 +128,10 @@ class ReportController {
         utm_params: {
           utm_term: [],
           utm_source: [],
+          source: [],
+          activity: [],
+          country: [],
+          city: [],
           utm_name: [],
           utm_content: [],
           utm_medium: []
@@ -154,6 +162,15 @@ class ReportController {
       //utm params
       pruned_results.utm_params.utm_term.push(value.utm_term);
       pruned_results.utm_params.utm_source.push(value.utm_source);
+
+      var utm_name_split = value.utm_name.split('*')
+      if (utm_name_split.length == 4) {
+        pruned_results.utm_params.source.push(utm_name_split[0])
+        pruned_results.utm_params.activity.push(utm_name_split[1])
+        pruned_results.utm_params.country.push(utm_name_split[2])
+        pruned_results.utm_params.city.push(utm_name_split[3])
+      }
+
       pruned_results.utm_params.utm_name.push(value.utm_name);
       pruned_results.utm_params.utm_content.push(value.utm_content);
       pruned_results.utm_params.utm_medium.push(value.utm_medium);
@@ -187,6 +204,22 @@ class ReportController {
         s.utm_params.utm_source.push(value.utm_source);
         iso_week.utm_params.utm_source = s.utm_params.utm_source;
 
+        var utm_name_split = value.utm_name.split('*')
+        if (utm_name_split.length == 4) {
+          s.utm_params.source.push(utm_name_split[0])
+          iso_week.utm_params.source = s.utm_params.source
+
+          s.utm_params.activity.push(utm_name_split[1])
+          iso_week.utm_params.activity = s.utm_params.activity
+
+          s.utm_params.country.push(utm_name_split[2])
+          iso_week.utm_params.country = s.utm_params.country
+
+          s.utm_params.city.push(utm_name_split[3])
+          iso_week.utm_params.city = s.utm_params.city
+        }
+
+
         //utm name
         s.utm_params.utm_name.push(value.utm_name);
         iso_week.utm_params.utm_name = s.utm_params.utm_name;
@@ -219,6 +252,15 @@ class ReportController {
         //utm params
         iso_week.utm_params.utm_term.push(value.utm_term);
         iso_week.utm_params.utm_source.push(value.utm_source);
+
+        var utm_name_split = value.utm_name.split('*')
+        if (utm_name_split.length == 4) {
+          iso_week.utm_params.source.push(utm_name_split[0])
+          iso_week.utm_params.activity.push(utm_name_split[1])
+          iso_week.utm_params.country.push(utm_name_split[2])
+          iso_week.utm_params.city.push(utm_name_split[3])
+        }
+
         iso_week.utm_params.utm_name.push(value.utm_name);
         iso_week.utm_params.utm_content.push(value.utm_content);
         iso_week.utm_params.utm_medium.push(value.utm_medium);
@@ -240,11 +282,15 @@ class ReportController {
       utm_source: _.uniq(pruned_results.utm_params.utm_source),
       utm_name: _.uniq(pruned_results.utm_params.utm_name),
       utm_content: _.uniq(pruned_results.utm_params.utm_content),
-      utm_medium: _.uniq(pruned_results.utm_params.utm_medium)
+      utm_medium: _.uniq(pruned_results.utm_params.utm_medium),
+      source: _.uniq(pruned_results.utm_params.source),
+      activity: _.uniq(pruned_results.utm_params.activity),
+      country: _.uniq(pruned_results.utm_params.country),
+      city: _.uniq(pruned_results.utm_params.city)
     }
 
-    return response.json(pruned_results);
-    // return response.send('<pre>' + JSON.stringify(results, null, 4) + '</pre>');
+    // return response.json(pruned_results);
+    return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
   }
 
   * cohortReport (request, response) {
