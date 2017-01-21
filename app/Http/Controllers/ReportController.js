@@ -38,7 +38,6 @@ class ReportController {
                             .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
     _.forEach(filters, function(value, index) {
       index = 'sessions.' + index;
-
       if ( index === 'sessions.iso_week' && (value.week_from.length !== 0 || value.week_to.length !=- 0)) {
         var start = moment(value.week_from).year() + ' | ' + moment(value.week_from).isoWeeks()
         var end = moment(value.week_to).year() + ' | ' + moment(value.week_to).isoWeeks()
@@ -51,9 +50,17 @@ class ReportController {
           end = moment().year() + ' | ' + moment().isoWeeks()
         }
 
-        console.log(start)
-        console.log(end)
         results.whereBetween('sessions.iso_week', [start, end])
+      } else if (index === 'sessions.source' && value.length !== 0) {
+        var searchString = ''
+        _.forEach(value, function (search) {
+          console.log('hmm')
+          searchString += search + '|'
+        })
+        searchString = searchString.slice(0, -1)
+        console.log(searchString)
+        results.whereRaw("utm_name REGEXP '" + searchString + "'")
+        //results.whereRaw("INSTR(utm_name, ?", value)
       } else if (index !== 'sessions.iso_week' && value.length !== 0) {
         results.whereIn(index, value)
       }
@@ -289,8 +296,8 @@ class ReportController {
       city: _.uniq(pruned_results.utm_params.city)
     }
 
-    // return response.json(pruned_results);
-    return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
+    return response.json(pruned_results);
+    // return response.send('<pre>' + JSON.stringify(pruned_results, null, 4) + '</pre>');
   }
 
   * cohortReport (request, response) {
