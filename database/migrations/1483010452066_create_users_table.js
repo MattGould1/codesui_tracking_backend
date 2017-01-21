@@ -8,6 +8,10 @@ class UsersTableSchema extends Schema {
     this.create('users', table => {
       table.increments()
       table.string('email', 254).notNullable().unique()
+      table.string('location')
+      table.integer('age')
+      table.string('gender')
+      table.string('purchase_made')
       table.timestamps()
     })
   }

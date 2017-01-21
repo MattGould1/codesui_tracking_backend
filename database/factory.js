@@ -53,7 +53,6 @@ Factory.blueprint('App/Model/Activity', (fake) => {
   return {
     activity_type: fake.pickone(opportunity_type),
     opportunity_type: fake.pickone(opportunity_type),
-    session_id: fake.string(),
     user_id: fake.string(),
     activity_id: fake.pickone(activity_id),
     call_id: fake.fbid()
@@ -125,13 +124,13 @@ Factory.blueprint('App/Model/Session', (fake) => {
   ];
 
   return {
-    id: fake.string(),
+    session_id: fake.fbid(),
     utm_source: fake.pickone(utm_source),
     utm_medium: fake.pickone(utm_medium),
     utm_name: fake.pickone(utm_name),
     utm_term: fake.pickone(utm_term),
     utm_content: fake.pickone(utm_content),
     host_name: fake.pickone(utm_host_name),
-    iso_week: fake.pickone(iso_weeks),
+    iso_week: fake.pickone(iso_weeks)
   }
 })

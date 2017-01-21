@@ -26,55 +26,58 @@ class DatabaseSeeder {
     // yield Factory.model('App/Model/User').reset()
     // yield Factory.model('App/Model/Activity').reset()
 
+    var user_ids = [],
+        count = 0;
+
     var fake = new Fake()
-    const sessions = yield Factory.model('App/Model/Session').create(300)
+    var session_count = 10
+    var user_count = 5
 
-    // sessions.each(function * (session) {
-    //   console.log(session.id)
-    //   if (fake.bool() === true) {
-    //     var location = [
-    //       'thailand',
-    //       'england',
-    //       'usa',
-    //       'france'
-    //     ];
+    const sessions = yield Factory.model('App/Model/Session').create(session_count)
 
-    //     const user = new User()
+    const users = yield Factory.model('App/Model/User').create(user_count)
 
-    //     user.email = fake.email()
-    //     user.session_id = session.id
-    //     user.location = fake.pickone(location)
-    //     user.age = fake.age()
-    //     user.gender = fake.gender()
-    //     user.purchase_made = fake.bool()
+    users.each(function * (user) {
+      user_ids.push(user.id)
+      yield user.save()
+    })
 
-    //     yield user.save()
+    sessions.each(function * (session) {
+        session.user_id = user_ids[count]
 
-    //     var activity_id = [
-    //       'website',
-    //       'mobile'
-    //     ];
+        if (count + 1 == user_count)
+          count = 0;
 
-    //     var opportunity_type = [
-    //       1,
-    //       2,
-    //       3,
-    //     ];
+        count++
+        var bool = fake.bool()
 
-    //     const activity = new Activity()
+        if (false) { // just save the session
+          yield session.save()
+        } else { // save the session with the activity yay!
 
-    //     activity.activity_type = fake.pickone(opportunity_type)
-    //     activity.opportunity_type = fake.pickone(opportunity_type)
-    //     activity.session_id = session.id
-    //     activity.user_id = user.id
-    //     activity.activity_id = fake.pickone(activity_id)
-    //     activity.call_id = fake.fbid()
+          var activity_id = [
+            'website',
+            'mobile'
+          ];
 
-    //     yield activity.save(activity)
-    //   }
-    // })
+          var opportunity_type = [
+            1,
+            2,
+            3,
+          ];
 
-    return
+          const activity = new Activity()
+
+          activity.activity_type = fake.pickone(opportunity_type)
+          activity.opportunity_type = fake.pickone(opportunity_type)
+          activity.activity_id = fake.pickone(activity_id)
+          activity.call_id = fake.fbid()
+          
+          yield session.activity().save(activity)
+        }
+
+    })
+
   }
 
 }

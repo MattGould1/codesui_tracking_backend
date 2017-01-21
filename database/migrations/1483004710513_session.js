@@ -8,7 +8,7 @@ class SessionTableSchema extends Schema {
     this.create('sessions', (table) => {
       table.timestamps()
       table.increments()
-      table.string('session_id')
+      table.string('session_id').notNullable().unique()
       table.string('utm_source')
       table.string('utm_medium')
       table.string('utm_name')
@@ -16,7 +16,8 @@ class SessionTableSchema extends Schema {
       table.string('utm_content')
       table.string('host_name')
       table.string('iso_week', 20)
-      table.index(['id', 'session_id', 'utm_source', 'utm_medium', 'utm_name', 'utm_term', 'utm_content', 'created_at'], 'session_index')
+      table.integer('user_id')
+      table.index(['id', 'session_id', 'user_id', 'utm_source', 'utm_medium', 'utm_name', 'utm_term', 'utm_content', 'created_at'], 'session_index')
     })
   }
 
