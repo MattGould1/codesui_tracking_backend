@@ -7,7 +7,6 @@ const moment = use('moment')
 class ReportController {
 
   query(start_iso, end_iso, filters) {
-    console.log(filters)
     const results = Database.select(
                               'sessions.id AS session_id',
                               'sessions.iso_week AS iso_week',
@@ -51,21 +50,19 @@ class ReportController {
         }
 
         results.whereBetween('sessions.iso_week', [start, end])
-      } else if (index === 'sessions.source' && value.length !== 0) {
+      } else if (index === 'sessions.utm_name_split' && value.length !== 0) {
         var searchString = ''
         _.forEach(value, function (search) {
-          console.log('hmm')
-          searchString += search + '|'
+          if (search.length !== 0)
+            searchString += search + '|'
         })
-        searchString = searchString.slice(0, -1)
-        console.log(searchString)
-        results.whereRaw("utm_name REGEXP '" + searchString + "'")
-        //results.whereRaw("INSTR(utm_name, ?", value)
+        searchString = searchString.split(',').join('|').slice(0, -1)
+        if (searchString !== '')
+          results.whereRaw("utm_name REGEXP '" + searchString + "'")
       } else if (index !== 'sessions.iso_week' && value.length !== 0) {
         results.whereIn(index, value)
       }
     })
-
     return results;
   }
 
@@ -90,7 +87,7 @@ class ReportController {
   }
 
   * index(request, response) {
-    Database.on('sql', console.log)
+    //Database.on('sql', console.log)
     var filters = request.all();
 
     //get the results for a certain period
