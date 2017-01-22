@@ -1,3 +1,4 @@
+// Cookie setter and getter library
 ;(function (factory) {
   if (typeof define === 'function' && define.amd) {
     define(factory);
@@ -143,116 +144,299 @@
   return init(function () {});
 }));
 
-
-function extend() {
-    for (var i = 1; i < arguments.length; i++) {
-        for (var key in arguments[i]) {
-            if (arguments[i].hasOwnProperty(key)) {
-                arguments[0][key] = arguments[i][key];
-            }
-        }
-    }
-
-    return arguments[0];
+//helper function for creating merged json objects
+function extend(){
+  for(var i=1; i<arguments.length; i++)
+    for(var key in arguments[i])
+      if(arguments[i].hasOwnProperty(key))
+        arguments[0][key] = arguments[i][key];
+  return arguments[0];
 }
 
-//tracking class
 (function () {
-  this.CStracking = function () {
 
-    //no options yet:)
-    var options = {
-    };
+  //public methods
+  this.Tracking = function () {
+    var options = getOptionsFromURL.call(this)
 
+    //push the variable to ctm for tracking
+    if (options.uuid) {
+      var __ctm_cvars = __ctm_cvars || []
+      __ctm_cvars.push({session_id: options.uuid})
+    }
+
+    //extend the default options with the custom supplied ones
     if ( arguments[0] && typeof arguments[0] === "object" ) {
       this.options = extendDefaults(options, arguments[0]);
     }
+  }
 
-  };
+  Tracking.prototype.createSession = function () {
+    var o = this.options
+    var renew = getCookie('sessionID')
 
-  //public methods
-  CStracking.prototype.getUtm = function (tag, url) {
-    //check that a url was passed, if not just use the current location
+    if (renew) {
+      Cookies.set('sessionID', renew, { expires: 20 })
+    }
+
+    var xhttp = new XMLHttpRequest
+
+    if (!o.oldUTMTags) { // we're dealing with some new utm tags here!
+      setSessionInCookies(o.uuid)
+
+      xhttp.open("POST", o.tracking_url + '/session/initiate', true)
+      xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8')
+      xhttp.send(JSON.stringify(o.sessionJSON))
+
+      Cookies.set('utmInfo', o.newUTMTags, { expires: 20 })
+    } else if (
+      (o.utmCampaign !== null && o.utmCampaign.indexOf('email') !== -1) && //check to see if the new utmcampaign param has an email
+      (o.oldUTMTags.indexOf('email') == -1) //but don't overwrite the utm params if the old email param still exists
+    ) {
+      xhttp.open("POST", o.tracking_url + '/session/initiate', true)
+      xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8')
+      xhttp.send(JSON.stringify(o.sessionJSON))
+
+      Cookies.set('utmInfo', o.newUTMTags, { expires: 20 })
+    }
+
+  }
+
+
+  Tracking.prototype.saveOpportunity = function (booking_id) {
+    saveOpportunity.call(this, booking_id)
+  }
+
+  Tracking.prototype.setOpportunityInCookies = function (email, type, booking_id) {
+    setOpportunityInCookies.call(this, email, type, booking_id)
+  }
+
+  Tracking.prototype.saveFormEmail = function () {
+    saveFormEmail.call(this)
+  }
+
+  //does what it says, parses url and gets the data ready for all other functions
+  function getOptionsFromURL () {
+    var options = {}
+
+    // Set some variables for parsing first
+    var href = window.location.href
+
+    // Let's get our domain/hostname
+    var parser = document.createElement('a')
+    parser.href = href
+    var protocol = parser.protocol
+    var hostname = parser.hostname
+    var pathname = parser.pathname
+    hostname = hostname.replace('www.','')
+
+    options.hostname = hostname
+    options.href = href;
+
+    options.utmSource = getUtm('utm_source', href)
+    options.utmMedium = getUtm('utm_medium', href)
+    options.utmTerm = getUtm('utm_term', href)
+    options.utmContent = getUtm('utm_content', href)
+    options.utmCampaign = getUtm('utm_campaign', href)
+
+    //get the sessionID if it exists already in cookies
+    options.sessionID = getCookie('sessionID')
+
+    //if the campaign is null attribute it to dd or md w/o any other tracking params
+    if (options.utmCampaign === null) {
+      if (hostname === 'www.dentaldepartures.com' || hostname === 'dentaldepartures.com') {
+        options.utmCampaign = '0^dd^0^0^0^0^0^0';
+      } else if (hostname === 'www.medicaldepartures.com' || hostname === 'medicaldepartures.com') {
+        options.utmCampaign = '0^md^0^0^0^0^0^0';
+      }
+    }
+
+    //now the source, check if its null and if it is, try to figure out where the user came from
+    if (options.utmSource === null) {
+      var searchEngines = ["google","bing","yahoo","aol","yandex","ask","baidu","sogou","startsiden","avg","msn"];
+      var socialNetworks = ["facebook","pinterest","linkedin","twitter","livejournal","reddit","youtube","yelp","naver","weibo","sina","stumbleupon"];
+      var searchFound = false;
+      var socialFound = false;
+      var a = 0;
+      var b = 0;
+      var i;
+      var ref = document.referrer;
+      for (i = 0; i < searchEngines.length; i++) {
+        var pattSearch = new RegExp("(http(s)?:\/\/.)?(www\\.)?(" + searchEngines[i] + ")\.[a-z]{2,6}");
+        if (pattSearch.test(ref)) {
+          searchFound = true;
+          break;
+        }
+        a++;
+      }
+      for (i = 0; i < socialNetworks.length; i++) {
+        var pattSocial = new RegExp("(http(s)?:\/\/.)?(www\\.)?(" + socialNetworks[i] + ")\.[a-z]{2,6}");
+        if (pattSocial.test(ref)) {
+          socialFound = true;
+          break;
+        }
+        b++;
+      }
+      if (searchFound) {
+        options.utmSource = searchEngines[a];
+        options.utmMedium = "organic";
+      } else if (socialFound) {
+        options.utmSource = socialNetworks[b];
+        options.utmMedium = "social";
+      } else if (document.referrer === "") {
+        options.utmSource = "(none)";
+        options.utmMedium = "direct";
+      } else {
+        var otherRef = document.createElement('a');
+        otherRef.href = document.referrer;
+        var urlStr = otherRef.hostname;
+        urlStr = urlStr.replace('www.','');
+        options.utmSource = urlStr;
+        options.utmMedium = "referral";
+      }
+    }
+
+    options.oriLink = '';
+
+    if (options.utmSource === '(none)') {
+      options.oriLink = protocol + '//' + hostname + pathname + '?utm_source=&utm_medium=' +
+                options.utmMedium + '&utm_campaign=' + options.utmCampaign + '&utm_term=' + options.utmTerm +
+                '&utm_content=' + options.utmContent + '&ccare=true'
+    } else {
+      options.oriLink = protocol + '//' + hostname + pathname + '?utm_source=' + options.utmSource +
+            '&utm_medium=' + options.utmMedium + '&utm_campaign=' + options.utmCampaign +
+            '&utm_term=' + options.utmTerm + '&utm_content=' + options.utmContent + '&ccare=true'
+    }
+
+    //set the customer care link in cookies, this is used server side for emails predominantly.
+    if (!getCookie('customerLink')) {
+      setCustomerLinkInCookies(options.oriLink)
+    }
+
+    //sets ccare in cookies if query string has ccare=true in it
+    if (window.location.search.indexOf('ccare=true') > -1) {
+      setCcareInCookies()
+      ccare = getCookie('ccare')
+      options.ccareJSON = JSON.parse(ccare)
+    }
+
+    //try to get the current session_id, if not generate a new one
+    if (options.sessionID) {
+      options.uuidJSON = JSON.parse(options.sessionID)
+      options.uuid = options.uuidJSON.session_id
+      options.sessionID = options.uuid
+    } else {
+      options.sessionID = generateUUID()
+      options.uuid = options.sessionID
+      options.uuidJSON = JSON.parse('{"session_id" : "' + options.uuid + '"}')
+    }
+
+    options.sessionCheck = checkCookie('sessionID')
+
+    options.newUTMTags = JSON.parse('{"utmTags": {"source": "' + options.utmSource + '", "medium": "' + options.utmMedium +
+          '", "term": "' + options.utmTerm + '", "content": "' + options.utmContent +
+          '", "campaign": "' + options.utmCampaign + '"}, "domain" : "' + options.hostname + '"}')
+
+    options.oldUTMTags = getCookie('utmInfo')
+
+    options.sessionJSON = extend({}, options.newUTMTags, options.uuidJSON, options.ccareJSON)
+
+    return options;
+  }
+
+  //private methods
+  function extendDefaults(source, properties) {
+    var property
+    for (property in properties) {
+      if (properties.hasOwnProperty(property)) {
+        source[property] = properties[property]
+      }
+    }
+    return source
+  }
+
+  /*
+  Function to get UTM tags from the url
+
+  Params:
+  tag = String, UTM tag parameter name | eg. 'utm_source'
+  url (optional) = String, the URL to be parsed. If left blank,
+                   will get from browser current URL.
+  */
+  function getUtm(tag, url) {
     if (!url) url = window.location.href;
-
     tag = tag.replace(/[\[\]]/g, "\\$&");
-
-    var regex = new RegExp("[?&]" + tag + "(=([^&#]*)|&|#|$)", "i"),
+    var regex = new RegExp("[?&]" + tag + "(=([^&#]*)|&|#|$)", "i"), // note this is only for query strings that are encoded properly
         results = regex.exec(url);
 
+    // utm_campaign%3D(.*?)($|%26) regex that would work for BING!!!
     if (!results) return null;
-
     if (!results[2]) return '';
-
     return decodeURIComponent(results[2].replace(/\+/g, " "));
   }
 
-  //save emails to the tracking db
-  CStracking.prototype.saveEmail = function (activity, purchaseid) {
-    var email;
-    //for contact based emails
-    var contactEmail = document.getElementsByClassName('c_email');
-    //for subscription based emails
-    var subscribeEmail = document.getElementsByClassName('s_email');
+  /*
+  Function to save session ID in cookie
 
-    // var activity = document.getElementsByClassName('cs_activity').value;
+  Params:
+  sessionID = String, Session ID is set in here | eg. '145'
+  */
+  function setSessionInCookies(sessionID, ccare) {
+    var str = '{"session_id": "' + sessionID + '"}';
+    var json = JSON.parse(str);
 
-    // if (activity == undefined) {
-    //   activity = null;
-    // }
-
-    var i;
-
-    for (i = 0; i < contactEmail.length; i++) {
-      email = document.getElementsByClassName('c_email')[i].value;
-
-      /*
-        A little bit of validation, make sure the email contains an @ symbol... 
-        We won't actually get this far if the forms validation fails as well - so it's just a precaution!     
-      */
-      if (email.indexOf('@') > 0) {
-        setOpportunityInCookies(email, 1, null, activity);
-        saveOpportunity(email, purchaseid, activity);
-      }
-    }
-
-    for(i = 0; i < subscribeEmail.length; i++) {
-      email = document.getElementsByClassName('s_email')[i].value;
-      if (email.indexOf('@') > 0) {
-        setOpportunityInCookies(email, 2, null, activity);
-        saveOpportunity(email, purchaseid, activity);
-      }
-    }
+    Cookies.set('sessionID', json, { expires: 20 });
   }
 
-  function saveOpportunity(email, purchaseid, activity) {
-    var xhttp = new XMLHttpRequest();
+  /*
+  Function to set CCare
+  */
+  function setCcareInCookies() {
+    var str = '{"ccare": "true"}';
+    var json = JSON.parse(str);
 
-    var eventJSON;
-
-    //save the purchaseid, this user might go onto do something different
-    if (purchaseid) {
-      //save opportunity as type 3 + the id (if applicaable) with the email
-      setOpportunityInCookies(email, 3, purchaseid, activity);
-      var eventJSON = JSON.parse(getCookie('purchaseID'));
-    }
-
-    //send the data off
-    if (checkCookie('sessionID') && checkCookie('email')) {
-      var sessionJSON = JSON.parse(getCookie('sessionID'));
-      var emailJSON = JSON.parse(getCookie('email'));
-      var finalJSON = extend({}, sessionJSON, emailJSON, eventJSON);
-      xhttp.open("POST", tracking_url + '/activity/create', true);
-      xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-      xhttp.send(JSON.stringify(finalJSON));
-    } else {
-      //failed, do this later
-    }
+    Cookies.set('ccare', json, { expires: 365 });
   }
 
-  CStracking.prototype.checkCookie = function(name) {
-    return checkCookie(name);
+  /*
+  Function to save email in cookie
 
+  Params:
+  email = String, Email is set in here | eg. 'johndoe@gmail.com'
+  type = Integer, 3 valid types are accepted. 1=Contact, 2=Newsletter, 3=Booking
+  bookingID = String
+  */
+  function setOpportunityInCookies(email,type,bookingID) {
+    var str1 = '{"email": "' + email + '","type": "' + type + '"}';
+    var json1 = JSON.parse(str1);
+    var str2 = '{"booking_id": "' + bookingID + '"}';
+    var json2 = JSON.parse(str2);
+    Cookies.set('email', json1, { expires: 0.375 });
+    Cookies.set('bookingID', json2, { expires: 0.375 });
+  }
+
+  /*
+  Function to save customer url in cookies, cookie is used in the zend common library
+
+  Params:
+  Full URL = String
+  */
+  function setCustomerLinkInCookies(url) {
+    var str = '{"customer_link": "' + url + '"}';
+    var json = JSON.parse(str);
+
+    Cookies.set('customerLink', json, { expires: 0.375 });
+  }
+
+  /*
+  Function to get cookie from cookie store
+
+  Params:
+  cname = String, Cookie name to fetch | eg. 'sessionID'
+  */
+  function getCookie(cname) {
+    var data = Cookies.get(cname);
+    return data;
   }
 
   function checkCookie(name) {
@@ -270,22 +454,65 @@ function extend() {
         end = dc.length;
       }
     }
-    return unescape(dc.substring(begin + prefix.length, end));    
+    return unescape(dc.substring(begin + prefix.length, end));
   }
 
-  /*
-    Set the session ID in cookies. The cookies last for roughly 8 hours. 
-    If a user comes back after this period, we will generate a new cookie for them and count it as a new session!
-  */
-  CStracking.prototype.setSessionInCookies = function (sessionID, ccare) {
-    var str = '{"session_id": "' + sessionID + '"}';
-    var json = JSON.parse(str);
+  // Function to save opportunity information to DB
+  function saveOpportunity(bookingID) {
+    var xhttp = new XMLHttpRequest();
+    var bookingJSON;
+    if (bookingID) {
+      var email;
+      if (document.getElementById('original_email') !== null) {
+        email = document.getElementById('original_email').value;
+      } else if (document.getElementById('email_address') !== null) {
+        email = document.getElementById('email_address').value;
+      } else if (document.getElementById('result_email') !== null) {
+        email = document.getElementById('result_email').innerText;
+      }
+      setOpportunityInCookies(email,3,bookingID);
+      bookingJSON = JSON.parse(getCookie('bookingID'));
+    }
 
-    Cookies.set('sessionID', json, { expires: 0.375 });
+    if (checkCookie('sessionID') && checkCookie('email')) {
+      var sessionJSON = JSON.parse(getCookie('sessionID'));
+      var emailJSON = JSON.parse(getCookie('email'));
+      var finalJSON = extend({}, sessionJSON, emailJSON, bookingJSON);
+      xhttp.open("POST", '//tracking.medicaldepartures.com/opportunity/create', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhttp.send(JSON.stringify(finalJSON));
+    } else {
+      xhttp.open("POST", '//tracking.medicaldepartures.com/opportunity/failed', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhttp.send(JSON.stringify(finalJSON));
+      console.log('Session ID cookie and Email cookie don\'t exist');
+    }
   }
 
-  //generate a random unique ID for every session
-  CStracking.prototype.generateUUID = function () {
+  // Function if there is a form submit (any), to save opportunity in DB
+  function saveFormEmail() {
+    var email;
+    var cEmail = document.getElementsByClassName('c_email');
+    var nEmail = document.getElementsByClassName('n_email');
+    var i;
+    for(i = 0; i < cEmail.length; i++) {
+      email = document.getElementsByClassName('c_email')[i].value;
+      if (email.indexOf('@') > 0) {
+        setOpportunityInCookies(email,1,null);
+        saveOpportunity();
+      }
+    }
+    for(i = 0; i < nEmail.length; i++) {
+      email = document.getElementsByClassName('n_email')[i].value;
+      if (email.indexOf('@') > 0) {
+        setOpportunityInCookies(email,2,null);
+        saveOpportunity();
+      }
+    }
+  }
+
+  //generates a unique id (pretty unique anyway)
+  function generateUUID() {
     var d = Date.now();
     if(window.performance && typeof window.performance.now === "function"){
         d += performance.now();
@@ -324,226 +551,16 @@ function extend() {
     return uuid;
   }
 
-  CStracking.prototype.extend = function () {
-    for (var i = 1; i < arguments.length; i++) {
-        for (var key in arguments[i]) {
-            if (arguments[i].hasOwnProperty(key)) {
-                arguments[0][key] = arguments[i][key];
-            }
-        }
-    }
-
-    return arguments[0];
-  }
-
-  CStracking.prototype.getCookie = function (cname) {
-    return getCookie(cname);
-  }
-  function getCookie(cname) {
-    var data = Cookies.get(cname);
-    return data;
-  }
-  //private methods
-  function extendDefaults(source, properties) {
-    var property;
-    for (property in properties) {
-      if (properties.hasOwnProperty(property)) {
-        source[property] = properties[property]; 
-      }
-    }
-    return source;
-  }
-
-  function extend() {
-    for (var i = 1; i < arguments.length; i++) {
-        for (var key in arguments[i]) {
-            if (arguments[i].hasOwnProperty(key)) {
-                arguments[0][key] = arguments[i][key];
-            }
-        }
-    }
-
-    return arguments[0];
-  }
-
-  function setOpportunityInCookies(email,type,purchaseID, activity) {
-    var str1 = '{"email": "' + email + '","opportunity_type": "' + type + '","activity_id": "' + activity + '"}';
-    var json1 = JSON.parse(str1);
-    var str2 = '{"purchase_id": "' + purchaseID + '"}';
-    var json2 = JSON.parse(str2);
-    Cookies.set('email', json1, { expires: 0.375 });
-    Cookies.set('purchaseID', json2, { expires: 0.375 });
-  }
-
 })();
 
-var CStracking = new CStracking();
-
-//get the current UUID or generate a new one
-var currentUUID = CStracking.getCookie('sessionID');
-
-if (currentUUID) {
-  var uuid = JSON.parse(currentUUID);
-} else {
-  var uuid = CStracking.generateUUID();
+//custom options
+var options = {
+  tracking_url: '//tracking.medicaldepartures.com'
 }
 
-//application url
-var tracking_url = 'http://localhost:3333';
+var tracking = new Tracking(options)
 
-// Set some variables for parsing first
-var href = window.location.href;
-
-// Let's get our domain/hostname
-var parser = document.createElement('a');
-parser.href = href;
-var protocol = parser.protocol;
-
-var hostname = parser.hostname;
-var pathname = parser.pathname;
-
-hostname = hostname.replace('www.','');
-
-// Extract all UTM tags from the current page
-var utmSource = CStracking.getUtm('utm_source',href);
-var utmMedium = CStracking.getUtm('utm_medium',href);
-var utmTerm = CStracking.getUtm('utm_term',href);
-var utmContent = CStracking.getUtm('utm_content',href);
-var utmCampaign = CStracking.getUtm('utm_campaign', href);
-
-//TODO perhaps a new way of creating and tracking campaigns - per website?
-
-//if no source, then find the referrer
-if (!utmSource) {
-  var searchEngines = [
-      "google",
-      "bing",
-      "yahoo",
-      "aol",
-      "yandex",
-      "ask",
-      "baidu",
-      "sogou",
-      "startsiden",
-      "avg",
-      "msn"
-  ];
-
-  var socialNetworks = [
-      "facebook",
-      "pinterest",
-      "linkedin",
-      "twitter",
-      "livejournal",
-      "reddit",
-      "youtube",
-      "yelp",
-      "naver",
-      "weibo",
-      "sina",
-      "stumbleupon"
-  ];
-
-  var searchFound = false;
-  var socialFound = false;
-
-  var a = 0;
-  var b = 0;
-  var i;
-  var ref = document.referrer;
-
-  for (i = 0; i < searchEngines.length; i++) {
-    var pattSearch = new RegExp("(http(s)?:\/\/.)?(www\\.)?(" + searchEngines[i] + ")\.[a-z]{2,6}");
-    if (pattSearch.test(ref)) {
-      searchFound = true;
-      break;
-    }
-    a++;
-  }
-
-  for (i = 0; i < socialNetworks.length; i++) {
-    var pattSocial = new RegExp("(http(s)?:\/\/.)?(www\\.)?(" + socialNetworks[i] + ")\.[a-z]{2,6}");
-    if (pattSocial.test(ref)) {
-      socialFound = true;
-      break;
-    }
-    b++;
-  }
-
-  if (searchFound) {
-    utmSource = searchEngines[a];
-    utmMedium = "organic";
-  } else if (socialFound) {
-    utmSource = socialNetworks[b];
-    utmMedium = "social";
-  } else if (document.referrer === "") {
-    utmSource = "";
-    utmMedium = "direct";
-  } else {
-    var otherRef = document.createElement('a');
-    otherRef.href = document.referrer;
-    var urlStr = otherRef.hostname;
-    urlStr = urlStr.replace('www.','');
-    utmSource = urlStr;
-    utmMedium = "referral";
-  }
-}
-
-/*
-  We mainly care about the first load of the visitor, where they came from. 
-  Save the original link in the cookies, we'll track what the user did when they came from this link.
-*/
-
-// Function to save UTM information to DB
-var originalLink;
-if (utmSource === '') {
-  originalLink = protocol + '//' + hostname + pathname 
-    + '?utm_source=&utm_medium=' + utmMedium //source empty
-    + '&utm_campaign=' + utmCampaign 
-    + '&utm_term=' + utmTerm 
-    + '&utm_content=' + utmContent;
-}
-else {
-  originalLink = protocol + '//' + hostname + pathname 
-    + '?utm_source=' + utmSource 
-    + '&utm_medium=' + utmMedium 
-    + '&utm_campaign=' + utmCampaign 
-    + '&utm_term=' + utmTerm 
-    + '&utm_content=' + utmContent;
-}
-
-var xhttp = new XMLHttpRequest();
-var str = JSON.parse('{"utmTags": {"source": "' + utmSource + '", "medium": "' + utmMedium +
-          '", "term": "' + utmTerm + '", "content": "' + utmContent +
-          '", "campaign": "' + utmCampaign + '"}, "domain" : "' + hostname + '"}');
-
-//use the current uuid object from the cookie (if exists)
-if (currentUUID) {
-  var uuidJSON = uuid;
-} else {
-  var uuidJSON = JSON.parse('{"session_id" : "' + uuid + '"}');
-}
-
-//json object rdy for the tracking db
-var finalJSON = CStracking.extend({}, str, uuidJSON);
-
-/*
-  Create a new session in the tracking db, use the info we've got so far (utm)
-*/
-
-if (CStracking.checkCookie('utmInfo')) {
-  var cookieJSON = CStracking.getCookie('utmInfo');
-
-  if ( (JSON.stringify(str) !== cookieJSON && document.referrer.indexOf(hostname) == -1) || (str.utmTags.medium === "direct") ) {
-    if ( (!CStracking.checkCookie('sessionID') && document.referrer === "") || (str.utmTags.medium === "referral" || str.utmTags.medium === "social" || str.utmTags.medium === "organic") ) {
-      CStracking.setSessionInCookies(uuid);
-    }
-    xhttp.open("POST", tracking_url + '/session/initiate', true);
-    xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-    xhttp.send(JSON.stringify(finalJSON));
-    Cookies.set('utmInfo', str, { expires: 365 });
-  }
-}
+tracking.createSession()
 
 //capture all submit events
 window.onload = function() {
