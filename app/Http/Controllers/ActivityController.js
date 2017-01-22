@@ -2,6 +2,7 @@
 
 const User = use('App/Model/User')
 const Activity = use('App/Model/Activity')
+const Session = use('App/Model/Session')
 
 class ActivityController {
   /*
@@ -19,26 +20,32 @@ class ActivityController {
   * store (request, response) {
     const body = request.all()
 
-    // const user = new User()
+    const where = {
+      email: body.email
+    }
 
-    // user.email = body.email
-    // user.session_id = body.session_id
-    // user.location = ''
-    // user.age = ''
-    // user.gender = ''
-    // user.purchase_made = body.purchase_id
-    // user.activity_id = ''
+    const values = {
+      email: body.email,
+      location: '',
+      age: '',
+      gender: '',
+      purchase_made: (body.purchase_id) ? 1 : 0
+    }
 
-    // yield user.save()
+    const user = yield User.findOrCreate(where, values)
 
-    // const activity = new Activity()
+    const session = yield Session.findBy('session_id', body.session_id)
+    session.user_id = user.id
 
-    // activity.session_id = body.session_id
-    // activity.user_id = user.id
-    // activity.activity = body.activity_id //this is the cs_activity (used for filtering)
-    // activity.activity_type = body.opportunity_id //fix this later ** this will be the type of activity (further filters)
+    yield session.save()
 
-    // yield user.activity().save(activity)
+    const activity = new Activity()
+
+    activity.activity_type = body.activity_type
+    activity.opportunity_type = body.opportunity_type
+    activity.activity_id = body.activity
+
+    yield session.activity().save(activity)
 
     return response.send(true)
   }
