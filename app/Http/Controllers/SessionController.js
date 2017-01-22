@@ -5,9 +5,6 @@ const moment = use('moment')
 
 class SessionController {
 
-  * index(request, response) {
-    //
-  }
   /*
     Creates an initial session.
 
@@ -23,7 +20,7 @@ class SessionController {
       domain
     }
   */
-  * initiate(request, response) {
+  * store(request, response) {
     const body = request.all();
 
     const iso_week = moment().year() + ' | ' + moment().isoWeek();
@@ -43,26 +40,6 @@ class SessionController {
     });
 
     return response.send(true);
-  }
-
-  * store(request, response) {
-    //
-  }
-
-  * show(request, response) {
-    //
-  }
-
-  * edit(request, response) {
-    //
-  }
-
-  * update(request, response) {
-    //
-  }
-
-  * destroy(request, response) {
-    //
   }
 
 }
