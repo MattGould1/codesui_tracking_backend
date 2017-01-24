@@ -22,12 +22,15 @@ Route.on('/').render('welcome')
 //all of the public api routes - mainly used for saving data from user sessions
 Route.group('public', function () {
 
-	Route.post('activity/store', 'ActivityController.store');
-	Route.post('session/store', 'SessionController.store');
-	Route.any('report', 'ReportController.index');
-	Route.get('cohortReport', 'ReportController.cohortReport');
+	Route.post('activity/store', 'ActivityController.store')
+	Route.post('session/store', 'SessionController.store')
 
-	Route.get('test', 'TestController.test');
+	Route.post('adspend/store', 'AdspendController.store')
+
+	Route.any('report', 'ReportController.index')
+	Route.get('cohortReport', 'ReportController.cohortReport')
+
+	Route.get('test', 'TestController.test')
 
 });
 
