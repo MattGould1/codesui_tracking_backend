@@ -78,7 +78,8 @@ Factory.blueprint('App/Model/Session', (fake) => {
     'google',
     'facebook',
     'twitter',
-    'direct'
+    'direct',
+    'bing'
   ];
 
   var utm_name = [
