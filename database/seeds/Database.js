@@ -21,11 +21,6 @@ const Activity = use('App/Model/Activity')
 class DatabaseSeeder {
 
   * run () {
-    //reset
-    // yield Factory.model('App/Model/Session').reset()
-    // yield Factory.model('App/Model/User').reset()
-    // yield Factory.model('App/Model/Activity').reset()
-
     var user_ids = [],
         count = 0;
 

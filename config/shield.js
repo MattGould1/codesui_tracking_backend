@@ -83,7 +83,7 @@ module.exports = {
   csrf: {
     enable: true,
     methods: ['POST', 'PUT', 'DELETE'],
-    filterUris: ['/session/store', '/activity/store', '/report'],
+    filterUris: ['/session/store', '/session/check', '/activity/store', '/report', '/adspend/store'],
     compareHostAndOrigin: true
   }
 

@@ -8,33 +8,33 @@ class ReportController {
 
   query(start_iso, end_iso, filters) {
     const results = Database.select(
-                              'sessions.id AS session_id',
-                              'sessions.iso_week AS iso_week',
-                              'sessions.utm_term AS utm_term',
-                              'sessions.utm_source AS utm_source',
-                              'sessions.utm_name AS utm_name',
-                              'sessions.utm_content AS utm_content',
-                              'sessions.utm_medium AS utm_medium',
-                              Database.raw(`COUNT(activities.id) AS activity_id`),
-                              Database.raw(`COUNT(users.purchase_made) AS billed`),
-                              Database.raw(`COUNT(DISTINCT sessions.session_id) AS unique_sessions`),
-                              Database.raw(`COUNT(CASE
-                                WHEN activities.opportunity_type = 1 THEN 1
-                                ELSE NULL
-                              END) AS sum_leads_contact`),
-                              Database.raw(`COUNT(CASE
-                                WHEN activities.opportunity_type = 2 THEN 1
-                                ELSE NULL
-                              END) AS sum_leads_subscribe`),
-                              Database.raw(`COUNT(CASE
-                                WHEN activities.opportunity_type = 3 THEN 1
-                                ELSE NULL
-                              END) AS sum_leads_purchase`)
-                            )
-                            .from('sessions')
-                            .leftJoin('activities', 'sessions.id', 'activities.session_id')
-                            .leftJoin('users', 'sessions.user_id', 'users.id')
-                            .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
+        'sessions.id AS session_id',
+        'sessions.iso_week AS iso_week',
+        'sessions.utm_term AS utm_term',
+        'sessions.utm_source AS utm_source',
+        'sessions.utm_name AS utm_name',
+        'sessions.utm_content AS utm_content',
+        'sessions.utm_medium AS utm_medium',
+        Database.raw(`COUNT(activities.id) AS activity_id`),
+        Database.raw(`COUNT(users.purchase_made) AS billed`),
+        Database.raw(`COUNT(DISTINCT sessions.session_id) AS unique_sessions`),
+        Database.raw(`COUNT(CASE
+          WHEN activities.opportunity_type = 1 THEN 1
+          ELSE NULL
+        END) AS sum_leads_contact`),
+        Database.raw(`COUNT(CASE
+          WHEN activities.opportunity_type = 2 THEN 1
+          ELSE NULL
+        END) AS sum_leads_subscribe`),
+        Database.raw(`COUNT(CASE
+          WHEN activities.opportunity_type = 3 THEN 1
+          ELSE NULL
+        END) AS sum_leads_purchase`)
+      )
+      .from('sessions')
+      .leftJoin('activities', 'sessions.id', 'activities.session_id')
+      .leftJoin('users', 'sessions.user_id', 'users.id')
+      .groupByRaw('sessions.iso_week, sessions.utm_term, sessions.utm_source, sessions.utm_name, sessions.utm_content');
     _.forEach(filters, function(value, index) {
       index = 'sessions.' + index;
       if ( index === 'sessions.iso_week' && (value.week_from.length !== 0 || value.week_to.length !=- 0)) {
@@ -68,30 +68,73 @@ class ReportController {
 
   cohortQuery(iso_start, iso_end) {
     const results = Database.select(
-                              'sessions.session_id AS session_id', 
-                              'sessions.utm_source AS utm_source',
-                              'sessions.utm_medium AS utm_medium',
-                              'sessions.utm_name  AS utm_name',
-                              'activities.activity_id AS activity_id',
-                              'activities.opportunity_type AS activity_type',
-                              'users.created_at AS user_creation',
-                              'users.email AS user_id'
-                            )
-                            .from('sessions')
-                            .leftJoin('users', 'users.session_id', 'sessions.session_id')
-                            .leftJoin('activities', 'activities.session_id', 'sessions.session_id')
-                            .where('users.email', '<>', '')
-                            .groupBy('users.email');
+        'sessions.session_id AS session_id', 
+        'sessions.utm_source AS utm_source',
+        'sessions.utm_medium AS utm_medium',
+        'sessions.utm_name  AS utm_name',
+        'activities.activity_id AS activity_id',
+        'activities.opportunity_type AS activity_type',
+        'users.created_at AS user_creation',
+        'users.email AS user_id'
+      )
+      .from('sessions')
+      .leftJoin('users', 'users.session_id', 'sessions.session_id')
+      .leftJoin('activities', 'activities.session_id', 'sessions.session_id')
+      .where('users.email', '<>', '')
+      .groupBy('users.email');
 
     return results;
   }
 
+  adspend(start, end, filters) {
+    const ad_spend = Database
+      .select('*')
+      .from('ad_spends')
+
+    // filters.iso_week.week_from = '2016 | 01'
+    // filters.iso_week.week_to = '2017 | 04'
+
+    _.forEach(filters, function(value, index) {
+      index = 'ad_spends.' + index;
+      if ( index === 'ad_spends.iso_week' && (value.week_from.length !== 0 || value.week_to.length !=- 0)) {
+        var start = moment(value.week_from).year() + ' | ' + moment(value.week_from).isoWeeks()
+        var end = moment(value.week_to).year() + ' | ' + moment(value.week_to).isoWeeks()
+
+        if (value.week_from === '') {
+          start = '2015 | 52'
+        }
+
+        if (value.week_to === '') {
+          end = moment().year() + ' | ' + moment().isoWeeks()
+        }
+
+        ad_spend.whereBetween('ad_spends.iso_week', [start, end])
+      } else if (index === 'ad_spends.utm_name_split' && value.length !== 0) {
+        var searchString = ''
+        _.forEach(value, function (search) {
+          if (search.length !== 0)
+            searchString += search + '|'
+        })
+        searchString = searchString.split(',').join('|').slice(0, -1)
+        if (searchString !== '')
+          ad_spend.whereRaw("utm_name REGEXP '" + searchString + "'")
+      } else if (index !== 'ad_spends.iso_week' && value.length !== 0) {
+        ad_spend.whereIn(index, value)
+      }
+    })
+
+    return ad_spend
+  }
+
   * index(request, response) {
-    //Database.on('sql', console.log)
     var filters = request.all();
 
     //get the results for a certain period
     const results = yield this.query('2016 | 01', '2016 | 53', filters);
+
+    Database.on('sql', console.log)
+  
+    const results1 = yield this.adspend('2016 | 01', '2016 | 53', filters);
 
     //structure of the json
     var pruned_results = {
@@ -105,6 +148,12 @@ class ReportController {
         utm_name: [],
         utm_content: [],
         utm_medium: []
+      },
+      cac: {
+        session: 0,
+        subscribe: 0,
+        contact: 0,
+        purchase: 0,
       },
       activity: {
         id: [],
@@ -280,6 +329,33 @@ class ReportController {
 
       pruned_results.time[value.iso_week] = iso_week;
     });
+
+    _.forEach(pruned_results.time, function (time, index) {
+
+      console.log(index)
+      console.log(time)
+      const week = time.week
+      const cac = {
+        session: 0,
+        contact: 0,
+        subscribe: 0,
+        purchase: 0
+      }
+      _.forEach(results1, function (value) {
+        if (value.iso_week == week) {
+          cac.session += Math.round(Number(value.amount))
+        }
+      })
+
+      cac.contact = Math.round(cac.session / time.activity.sum_leads_contact)
+      cac.subscribe = Math.round(cac.session / time.activity.sum_leads_subscribe)
+      cac.purchase = Math.round(cac.session / time.activity.sum_leads_purchase)
+
+      time.cac = cac;
+
+      pruned_results.time[index] = time
+    })
+
 
     pruned_results.filter_options.utm_params = {
       utm_term: _.uniq(pruned_results.utm_params.utm_term),

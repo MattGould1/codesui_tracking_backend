@@ -21,9 +21,9 @@ class SessionController {
     }
   */
   * store(request, response) {
-    const body = request.all();
-
-    const iso_week = moment().year() + ' | ' + moment().isoWeek();
+    const body = request.all()
+    console.log(body)
+    const iso_week = moment().year() + ' | ' + moment().isoWeek()
 
     const session = yield Session.findOrCreate({
       session_id: body.session_id
@@ -37,11 +37,31 @@ class SessionController {
       utm_content: body.utmTags.content,
       host_name: body.domain,
       iso_week: iso_week
-    });
+    })
 
-    return response.send(true);
+    return response.send(true)
   }
+  /*
+    Checks that a session exists, if it doesn't frontend will trigger "store" with new session_id
 
+    Request.all() = {
+      session_id,
+      utmTags {
+        source,
+        medium,
+        campaign,
+        term,
+        content
+      },
+      domain
+    }
+  */
+  * check (request, response) {
+    const body = request.all()
+    const session = yield Session.findBy('session_id', 'gaerer')
+
+    return response.send((session) ? 'true' : 'false')
+  }
 }
 
 module.exports = SessionController

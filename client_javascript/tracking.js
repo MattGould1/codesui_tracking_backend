@@ -105,7 +105,7 @@
             } catch (e) {}
           }
 
-          if (key === name) {
+          if (key === name)
             result = cookie;
             break;
           
@@ -156,27 +156,94 @@
 
   //public methods
   cstracking.prototype.session = function () {
-    var options = this.options;
+    checkSession.call(this)
+  }
 
-    var session = getCookie('session')
+  cstracking.prototype.saveOpportunity = function (opportunity_id) {
+    saveOpportunity.call(this, opportunity_id)
+  }
 
-    if (session) {
-      Cookies.set('session', session, { expires: 30 })
+  // Function to save opportunity information to DB
+  function saveOpportunity(activity_type, activity_id, opportunity_type, email) {
+    var xhttp = new XMLHttpRequest()
+
+    var activityJSON
+
+    if (email) {
+      activityJSON = JSON.parse('{ "email" : "' + email + '", "opportunity_type" : "' + opportunity_type + '", "activity_id" : "' + activity_id + '", "activity_type" : "' + activity_type + '"}')
+      Cookies.set('activity', activityJSON, { expires: 365 })
     }
 
+    var completeJSON = extend({}, this.options.sessionJSON, activityJSON)
+
+    xhttp.open("POST", this.options.url + '/activity/store', true);
+    xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    xhttp.send(JSON.stringify(completeJSON));
+
+  }
+
+  Tracking.prototype.saveOpportunity = function (activity_type, activity_id, opportunity_type, email) {
+    saveOpportunity.call(this, activity_type, activity_id, opportunity_type, email);
+  }
+
+  //private methods
+  
+  // sends data off to the session/create
+  function generateSession(options, create_new) {
+    var o = options
     var xhttp = new XMLHttpRequest
 
-    if (!o.oldUTMTags) { // we're dealing with some new utm tags here!
-      setSessionInCookies(o.uuid)
+    if (create_new === true) {
+      setSessionInCookies(o.uuidUNIQUE)
+      o.sessionJSON.session_id = o.uuidUNIQUE
 
-      xhttp.open("POST", o.tracking_url + '/session/initiate', true)
+      xhttp.open("POST", o.url + '/session/initiate', true)
       xhttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8')
       xhttp.send(JSON.stringify(o.sessionJSON))
 
-      Cookies.set('utmInfo', o.newUTMTags, { expires: 20 })
+    } else {
+      setSessionInCookies(o.sessionID)
     }
+
+    Cookies.set('utmInfo', o.utmTags, { expires: 20 });
   }
-  //private methods
+
+  // sends data off to the session/check
+  function checkSession() {
+    var o = this.options;
+    var check = false;
+    var xhttp = new XMLHttpRequest;
+    var $this = this;
+
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        if (this.responseText != 'true') {
+          generateSession(o, true);
+
+          $this.options.sessionID = o.uuidUNIQUE;
+          $this.options.sessionJSON.session_id = o.uuidUNIQUE;
+        }
+        //update cookies every 5 seconds
+        setInterval(renewSessionCookie, 60000, [o, this.responseText]);       
+      }
+      
+      return check;
+    }
+
+    xhttp.open("POST", o.url + '/session/check', true);
+    xhttp.setRequestHeader('Content-Type', 'application/json; charset="UTF-8');
+    xhttp.send(JSON.stringify(o.sessionJSON));
+  }
+
+  // renews the session cookie data
+  function renewSessionCookie() {
+    var options = arguments[0][0];
+    var check = arguments[0][1];
+
+    setSessionInCookies((check === true) ? options.uuidUNIQUE : options.sessionID);
+    Cookies.set('utmInfo', options.utmTags, { expires: 20 });
+  }
+
   //does what it says, parses url and gets the data ready for all other functions
   function getOptions () {
     var options = {}
@@ -201,9 +268,6 @@
     options.utmContent = getUtm('utm_content', href)
     options.utmCampaign = getUtm('utm_campaign', href)
 
-    //get the sessionID if it exists already in cookies
-    options.session = getCookie('session')
-
     //if the campaign is null attribute it to dd or md w/o any other tracking params
     if (options.utmCampaign === null) {
       options.utmCampaign = 'null*null*null*null'
@@ -219,6 +283,7 @@
       var b = 0;
       var i;
       var ref = document.referrer;
+
       for (i = 0; i < searchEngines.length; i++) {
         var pattSearch = new RegExp("(http(s)?:\/\/.)?(www\\.)?(" + searchEngines[i] + ")\.[a-z]{2,6}");
         if (pattSearch.test(ref)) {
@@ -227,6 +292,7 @@
         }
         a++;
       }
+
       for (i = 0; i < socialNetworks.length; i++) {
         var pattSocial = new RegExp("(http(s)?:\/\/.)?(www\\.)?(" + socialNetworks[i] + ")\.[a-z]{2,6}");
         if (pattSocial.test(ref)) {
@@ -235,6 +301,7 @@
         }
         b++;
       }
+
       if (searchFound) {
         options.utmSource = searchEngines[a];
         options.utmMedium = "organic";
@@ -254,34 +321,27 @@
       }
     }
 
-    options.oriLink = '';
-
-    if (options.utmSource === '(none)') {
-      options.oriLink = protocol + '//' + hostname + pathname + '?utm_source=&utm_medium=' +
-                options.utmMedium + '&utm_campaign=' + options.utmCampaign + '&utm_term=' + options.utmTerm +
-                '&utm_content=' + options.utmContent + '&ccare=true'
-    } else {
-      options.oriLink = protocol + '//' + hostname + pathname + '?utm_source=' + options.utmSource +
-            '&utm_medium=' + options.utmMedium + '&utm_campaign=' + options.utmCampaign +
-            '&utm_term=' + options.utmTerm + '&utm_content=' + options.utmContent + '&ccare=true'
-    }
+    //get the sessionID if it exists already in cookies
+    options.session = getCookie('session')
 
     //try to get the current session_id, if not generate a new one
     if (options.session) {
       options.sessionJSON = JSON.parse(options.session)
       options.sessionID = options.sessionJSON.session_id
-      options.session = true
+      options.created_session = false
     } else {
       options.sessionID = generateUUID()
       options.sessionJSON = JSON.parse('{"session_id" : "' + options.sessionID + '"}')
-      options.session = false
+      options.created_session = true
     }
 
-    options.updatedUTM = JSON.parse('{"utmTags": {"source": "' + options.utmSource + '", "medium": "' + options.utmMedium +
+    options.updatedUTM = '{"utmTags": {"source": "' + options.utmSource + '", "medium": "' + options.utmMedium +
           '", "term": "' + options.utmTerm + '", "content": "' + options.utmContent +
-          '", "campaign": "' + options.utmCampaign + '"}, "domain" : "' + options.hostname + '"}')
+          '", "campaign": "' + options.utmCampaign + '"}, "domain" : "' + options.hostname + '"}'
 
     options.oldUTM = getCookie('utm_tags')
+
+    options.tags = JSON.parse((options.oldUTM) ? options.oldUTM : options.updatedUTM)
 
     options.sessionCreate = extend({}, options.newUTMTags, options.sessionJSON)
 
@@ -294,13 +354,14 @@
     if(window.performance && typeof window.performance.now === "function"){
         d += performance.now();
     }
+
     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = (d + Math.random()*16)%16 | 0;
         d = Math.floor(d/16);
         return (c=='x' ? r : (r&0x3|0x8)).toString(16);
     });
-    uuid = uuid.replace(/-/g, "");
 
+    uuid = uuid.replace(/-/g, "");
     uuid = uuid.split("");
 
     var text = "";
@@ -328,6 +389,33 @@
     return uuid;
   }
 
+  function setSessionInCookies(sessionID, ccare) {
+    var str = '{"session_id": "' + sessionID + '"}';
+    var json = JSON.parse(str);
+
+    Cookies.set('sessionID', json, { expires: 20 });
+  }
+  function getUtm(tag, url) {
+    if (!url) url = window.location.href;
+    tag = tag.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + tag + "(=([^&#]*)|&|#|$)", "i"), // note this is only for query strings that are encoded properly
+        results = regex.exec(url);
+
+    // utm_campaign%3D(.*?)($|%26) regex that would work for BING!!!
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
+  //helper function for creating merged json objects
+  function extend(){
+    for(var i=1; i<arguments.length; i++)
+      for(var key in arguments[i])
+        if(arguments[i].hasOwnProperty(key))
+          arguments[0][key] = arguments[i][key];
+    return arguments[0];
+  }
+
 })()
 
 var options = {
@@ -335,3 +423,39 @@ var options = {
 }
 
 var tracking = new cstracking(options)
+
+//capture all submit events
+window.onload = function () {
+  var form = document.getElementByTagName('form')
+
+  for (var i = 0; i < form.length; i++) {
+    form[i].onsubmit = submitted.bind(form)
+  }
+}
+
+function submitted(event) {
+  event.preventDefault()
+
+  var activity_type = false
+  var activity_id = false
+  var opportunity_type = false
+  var email = false
+
+  if (event.srcElement.getElementByClassName('cs_activity_type').length != 0) {
+    activity_type = event.srcElement.getElementsByClassName('cs_activity')[0].value
+  }
+
+  if (event.srcElement.getElementByClassName('cs_opportunity_type').length != 0) {
+    opportunity_type = event.srcElement.getElementByClassName('cs_opportunity_type')[0].value
+  }
+
+  if (event.srcElement.getElementByClassName('cs_activity_id').length != 0) {
+    activity_id = event.srcElement.getElementByClassName('cs_activity_id')[0].value
+  }
+
+  if (event.srcElement.getElementByClassName('cs_email').length != 0) {
+    email = event.srcElement.getElementByClassName('cs_email')[0].value
+  }
+
+  tracking.saveOpportunity(activity_type, activity_id, opportunity_type, email)
+}
